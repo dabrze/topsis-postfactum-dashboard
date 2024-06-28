@@ -150,45 +150,67 @@ def stepper_layout(
     return html.Div(
         [
             html.Div(
-                DangerouslySetInnerHTML(
-                    f"""
-                    <div id="submit-stepper" class="bs-stepper vertical">
-                        <div class="bs-stepper-header">
-                            <div class="step {step1_state}">
-                            <div class="step-trigger">
-                                <span class="bs-stepper-circle">1</span>
-                                <span class="bs-stepper-label">Welcome</span>
-                            </div>
-                            </div>
-                            <div class="line"></div>
-                            <div class="step {step2_state}">
-                            <div class="step-trigger">
-                                <span class="bs-stepper-circle">2</span>
-                                <span class="bs-stepper-label">Upload data</span>
-                            </div>
-                            </div>
-                            <div class="line"></div>
-                            <div class="step {step3_state}" >
-                            <div class="step-trigger">
-                                <span class="bs-stepper-circle">3</span>
-                                <span class="bs-stepper-label">Set criteria</span>
-                            </div>
-                            </div>
-                            <div class="line"></div>
-                            <div class="step {step4_state}">
-                            <div class="step-trigger">
-                                <span class="bs-stepper-circle">3</span>
-                                <span class="bs-stepper-label">Analyze</span>
-                            </div>
-                            </div>
-                        </div>
-                        <div class="bs-stepper-content">
-                        {content}
-                        </div>
-                    </div>
-                    """
-                ),
-                className="col-lg-8 col-md-12",
+                [
+                    html.Div(
+                        [
+                            html.Div(
+                                html.Div(
+                                    [
+                                        html.Span("1", className="bs-stepper-circle"),
+                                        html.Span(
+                                            "Welcome", className="bs-stepper-label"
+                                        ),
+                                    ],
+                                    className="step-trigger",
+                                ),
+                                className=f"step {step1_state}",
+                            ),
+                            html.Div(className="line"),
+                            html.Div(
+                                html.Div(
+                                    [
+                                        html.Span("2", className="bs-stepper-circle"),
+                                        html.Span(
+                                            "Upload data", className="bs-stepper-label"
+                                        ),
+                                    ],
+                                    className="step-trigger",
+                                ),
+                                className=f"step {step2_state}",
+                            ),
+                            html.Div(className="line"),
+                            html.Div(
+                                html.Div(
+                                    [
+                                        html.Span("3", className="bs-stepper-circle"),
+                                        html.Span(
+                                            "Set criteria", className="bs-stepper-label"
+                                        ),
+                                    ],
+                                    className="step-trigger",
+                                ),
+                                className=f"step {step3_state}",
+                            ),
+                            html.Div(className="line"),
+                            html.Div(
+                                html.Div(
+                                    [
+                                        html.Span("4", className="bs-stepper-circle"),
+                                        html.Span(
+                                            "Select model", className="bs-stepper-label"
+                                        ),
+                                    ],
+                                    className="step-trigger",
+                                ),
+                                className=f"step {step4_state}",
+                            ),
+                        ],
+                        className="bs-stepper-header",
+                    ),
+                    html.Div(content, className="bs-stepper-content"),
+                ],
+                id="submit-stepper",
+                className="bs-stepper vertical col-lg-8 col-md-12",
             ),
             html.Div(
                 html.Img(

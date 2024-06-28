@@ -17,17 +17,17 @@ def home_page_layout(app):
     return stepper_layout(
         app,
         step1_state="active",
-        content="""
+        content=DangerouslySetInnerHTML(
+            """
     <div class="panel task-select-table">
         <div class="row">
                 <div class="col-md-6 task-panel"">
-                <a href="/wizard" style="display: block">
+                <a href="/upload" style="display: block">
                     <i class="fa-solid fa-upload task-select-img"></i>
                     <h3 class="task-select-header">Upload data</h3>
                     <p class="stepper-description-box">We will analyze <b>your data</b> by uploading it to the server,
                     setting the criteria weights, and running TOPSIS. Then you will be able to perform
-                    postfactum analyses and discover how to change an alternative to reach a given 
-                    ranking position.</p>
+                    postfactum analyses and discover how to change alternatives to reach given goals.</p>
                     <button type="button" class="btn btn-lg btn-outline-primary task-select-button">Upload</button>
                 </a>
                 </div>
@@ -46,5 +46,6 @@ def home_page_layout(app):
             </div>
         </div>
     </div>
-                          """,
+                          """
+        ),
     )

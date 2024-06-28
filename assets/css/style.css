@@ -308,6 +308,50 @@ div.checkbox label {
     ;
 }
 
+.dropzone {
+    margin: 0.3125rem;
+    border: 0.125rem dashed #999 !important;
+    border-image: none;
+    text-align: center;
+    padding: 0.625rem;
+    max-height: 9.375rem;
+    min-height: 150px;
+}
+
+.dropzone.dz-clickable {
+    cursor: pointer;
+}
+
+.dropzone:hover {
+    border: 0.125rem dashed #48aaff !important;
+}
+
+.dropzone .dz-message {
+    text-align: center;
+    margin: 2em 0;
+}
+
+.card-header {
+    text-align: center;
+    font-weight: bold;
+}
+
+.drop-card .card-body {
+    padding-top: 0.625rem;
+}
+
+.drop-card .card-title {
+    text-align: center;
+    font-weight: 700;
+}
+
+.block-row {
+    margin-bottom: .5rem;
+}
+
+.optional {
+    color: #999
+}
 
 /* :root {
     --main: #006288;

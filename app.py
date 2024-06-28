@@ -31,6 +31,7 @@ from components.common import (
     footer,
 )
 from components.homepage import home_page_layout
+from components.upload import upload_layout
 
 
 app = dash.Dash(
@@ -3136,8 +3137,8 @@ app._favicon = "img/pad_logo.png"
 def display_page(pathname):
     if pathname == "/":
         return home_page_layout(app)
-    elif pathname == "/wizard":
-        return wizard()
+    elif pathname == "/upload":
+        return upload_layout(app)
     elif pathname == "/main_dash_layout":
         return main_dash_layout()
     elif pathname == "/playground":
