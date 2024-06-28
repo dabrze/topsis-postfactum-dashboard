@@ -1,11 +1,9 @@
 import dash_bootstrap_components as dbc
-
-from dash import dcc
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
 from dash import html
 
 
-external_stylesheets = [
+EXTERNAL_STYLESHEETS = [
     dbc.themes.BOOTSTRAP,
     "https://cdn.jsdelivr.net/npm/bs-stepper/dist/css/bs-stepper.min.css",
     "https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap",
@@ -15,7 +13,7 @@ external_stylesheets = [
 ]
 
 
-external_scripts = [
+EXTERNAL_SCRIPTS = [
     dict(
         {
             "src": "https://code.jquery.com/jquery-3.4.1.min.js",
@@ -37,6 +35,15 @@ external_scripts = [
 
 
 def header(app):
+    """
+    Generates the header component for the dashboard.
+
+    Parameters:
+    - app (Dash): The Dash application object.
+
+    Returns:
+    - DangerouslySetInnerHTML: The generated header component.
+    """
     return DangerouslySetInnerHTML(
         f"""
 <nav id="header" class="container navbar-light navbar navbar-expand-sm">
@@ -66,6 +73,12 @@ def header(app):
 
 
 def footer():
+    """
+    Generates the footer component for the dashboard.
+
+    Returns:
+    - html.Div: The generated footer component.
+    """
     return html.Div(
         [
             DangerouslySetInnerHTML(
@@ -118,74 +131,62 @@ def footer():
     )
 
 
-def home_layout(app):
+def stepper_layout(
+    app, step1_state="", step2_state="", step3_state="", step4_state="", content=""
+):
+    """
+    Generates the stepper layout component for the dashboard.
+
+    Parameters:
+    - step1_state (str): The state of step 1.
+    - step2_state (str): The state of step 2.
+    - step3_state (str): The state of step 3.
+    - step4_state (str): The state of step 4.
+    - content (str): The content of the stepper.
+
+    Returns:
+    - str: The generated stepper layout component.
+    """
     return html.Div(
         [
             html.Div(
                 DangerouslySetInnerHTML(
                     f"""
-<div id="submit-stepper" class="bs-stepper vertical">
-    <div class="bs-stepper-header">
-        <div class="step active">
-        <div class="step-trigger">
-            <span class="bs-stepper-circle">1</span>
-            <span class="bs-stepper-label">Welcome</span>
-        </div>
-        </div>
-        <div class="line"></div>
-        <div class="step">
-        <div class="step-trigger">
-            <span class="bs-stepper-circle">2</span>
-            <span class="bs-stepper-label">Upload data</span>
-        </div>
-        </div>
-        <div class="line"></div>
-        <div class="step" >
-        <div class="step-trigger">
-            <span class="bs-stepper-circle">3</span>
-            <span class="bs-stepper-label">Set criteria</span>
-        </div>
-        </div>
-        <div class="line"></div>
-        <div class="step">
-        <div class="step-trigger">
-            <span class="bs-stepper-circle">3</span>
-            <span class="bs-stepper-label">Analyze</span>
-        </div>
-        </div>
-    </div>
-    <div class="bs-stepper-content">
-        <div class="panel task-select-table">
-            <div class="row">
-                    <div class="col-md-6 task-panel"">
-                    <a href="/wizard" style="display: block">
-                        <i class="fa-solid fa-upload task-select-img"></i>
-                        <h3 class="task-select-header">Upload data</h3>
-                        <p class="stepper-description-box">We will analyze <b>your data</b> by uploading it to the server,
-                        setting the criteria weights, and running TOPSIS. Then you will be able to perform
-                        postfactum analyses and discover how to change an alternative to reach a given 
-                        ranking position.</p>
-                        <button type="button" class="btn btn-lg btn-outline-primary task-select-button">Upload</button>
-                    </a>
+                    <div id="submit-stepper" class="bs-stepper vertical">
+                        <div class="bs-stepper-header">
+                            <div class="step {step1_state}">
+                            <div class="step-trigger">
+                                <span class="bs-stepper-circle">1</span>
+                                <span class="bs-stepper-label">Welcome</span>
+                            </div>
+                            </div>
+                            <div class="line"></div>
+                            <div class="step {step2_state}">
+                            <div class="step-trigger">
+                                <span class="bs-stepper-circle">2</span>
+                                <span class="bs-stepper-label">Upload data</span>
+                            </div>
+                            </div>
+                            <div class="line"></div>
+                            <div class="step {step3_state}" >
+                            <div class="step-trigger">
+                                <span class="bs-stepper-circle">3</span>
+                                <span class="bs-stepper-label">Set criteria</span>
+                            </div>
+                            </div>
+                            <div class="line"></div>
+                            <div class="step {step4_state}">
+                            <div class="step-trigger">
+                                <span class="bs-stepper-circle">3</span>
+                                <span class="bs-stepper-label">Analyze</span>
+                            </div>
+                            </div>
+                        </div>
+                        <div class="bs-stepper-content">
+                        {content}
+                        </div>
                     </div>
-                <div class="col-md-6 task-panel"">
-                    <a href="/playground" style="display: block">
-                        <i class="fa-regular fa-circle-play task-select-img"></i>
-                        <h3 class="task-select-header">Use example</h3>
-                        <p class="stepper-description-box">If you don't have a dataset at hand, you can test out the server 
-                        using an <b>example dataset</b>. You will perform visualizations and postfactum analyses 
-                        without having to submit your own data.<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
-                        <button type="button" class="btn btn-lg btn-outline-primary task-select-button">Playground</button>
-                    <a/>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-"""
+                    """
                 ),
                 className="col-lg-8 col-md-12",
             ),

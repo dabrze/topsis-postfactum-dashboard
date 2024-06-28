@@ -22,5 +22,6 @@ $(document).ready(function () {
     updateFooter();
     setTimeout(function () { updateFooter(); }, 150)
     setTimeout(function () { updateFooter(); }, 500)
+    setTimeout(function () { updateFooter(); }, 1000)
     //startTutorial()
 });
