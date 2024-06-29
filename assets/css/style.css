@@ -5,6 +5,7 @@
 html,
 body {
     font-family: Roboto, -apple-system, "Helvetica Neue", Helvetica, "Segoe UI", Arial, sans-serif;
+    background-color: #f3f4f5;
 }
 
 body:after {
@@ -57,6 +58,11 @@ input:invalid {
 #pad-layout {
     margin: 0;
     padding: 0;
+    background-color: #fff;
+}
+
+#page-content {
+    min-height: 500px;
 }
 
 #page-content>p {
@@ -140,7 +146,6 @@ ul.navbar-nav {
 
 #footer {
     margin-top: 2.5rem;
-    padding-bottom: .9rem;
     font-family: Roboto, -apple-system, "Helvetica Neue", Helvetica, "Segoe UI", Arial, sans-serif;
     border-top: solid 1px #eee;
     background-color: #f3f4f5;
@@ -162,14 +167,10 @@ ul.navbar-nav {
     margin-top: 0;
 }
 
-#footer.fixed {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-}
 
 #pad-background {
     padding-top: 3.5rem;
+    padding-left: 1.5rem;
 }
 
 .step-slogan {
@@ -329,6 +330,14 @@ div.checkbox label {
 .dropzone .dz-message {
     text-align: center;
     margin: 2em 0;
+}
+
+.dropzone div .dz-remove {
+    font-size: 14px;
+    text-align: center;
+    display: block;
+    cursor: pointer;
+    border: none;
 }
 
 .card-header {

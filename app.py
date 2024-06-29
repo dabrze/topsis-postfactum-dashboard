@@ -1,27 +1,17 @@
-import base64
 import json
-import io
-import dash_daq as daq
 import pandas as pd
 import numpy as np
 import plotly.express as px
-import dash_mantine_components as dmc
 import plotly.graph_objects as go
-import matplotlib.pyplot as plt
 
-# import datetime
-
-import csv
 import time
 import WMSDTransformer as wmsdt
 import dash
-from dash import Dash
 from dash import no_update
 from dash import html
 from dash import dcc
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
-from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
 import dash_bootstrap_components as dbc
 from dash import dash_table
 from components.common import (
@@ -30,8 +20,7 @@ from components.common import (
     header,
     footer,
 )
-from components.homepage import home_page_layout
-from components.upload import upload_layout
+from components import homepage, upload
 
 
 app = dash.Dash(
@@ -743,401 +732,6 @@ def get_agg_fn(agg, colour):
     colour_g = colour
     agg_g = agg
     return "Back"
-
-
-@app.callback(
-    Output("wizard-data-output-parsed-data-before", "children", allow_duplicate=True),
-    Output("wizard-data-output-parsed-data-after", "children", allow_duplicate=True),
-    Output("wizard-data-output-upload-data-filename", "children"),
-    Output("wizard-data-input-remove-data", "children", allow_duplicate=True),
-    Output("wizard_data_input_submit-button", "style", allow_duplicate=True),
-    Output("wizard-data-input-title", "children", allow_duplicate=True),
-    Output("warning-upload-body", "children", allow_duplicate=True),
-    Output("warning-upload", "is_open", allow_duplicate=True),
-    Input("wizard-data-input-upload-data", "contents"),
-    Input("wizard-data-input-delimiter", "n_submit"),
-    State("wizard-data-input-delimiter", "value"),
-    Input("wizard-data-input-decimal", "n_submit"),
-    State("wizard-data-input-decimal", "value"),
-    State("wizard-data-input-upload-data", "filename"),
-    State("wizard-data-input-upload-data", "last_modified"),
-    prevent_initial_call=True,
-)
-def update_wizard_data_output_data(
-    contents_data, enter_del, delimiter, enter_sep, decimal, name_data, date_data
-):
-
-    if contents_data is not None:
-        child = [
-            parse_file_wizard_data_data(c, n, d, deli, dec)[0]
-            for c, n, d, deli, dec in zip(
-                [contents_data], [name_data], [date_data], [delimiter], [decimal]
-            )
-        ]
-
-        warnings_children = [
-            parse_file_wizard_data_data(c, n, d, deli, dec)[1]
-            for c, n, d, deli, dec in zip(
-                [contents_data], [name_data], [date_data], [delimiter], [decimal]
-            )
-        ][0]
-        is_open = [
-            parse_file_wizard_data_data(c, n, d, deli, dec)[2]
-            for c, n, d, deli, dec in zip(
-                [contents_data], [name_data], [date_data], [delimiter], [decimal]
-            )
-        ][0]
-
-        remove = html.Button(
-            id="wizard_data_input_remove-data-button",
-            className="remove-button",
-            children="Remove",
-        )
-        project_title = name_data.split(".")[0]
-
-        return (
-            child,
-            child,
-            name_data,
-            remove,
-            {"display": "block"},
-            project_title,
-            warnings_children,
-            is_open,
-        )
-    else:
-        raise PreventUpdate
-
-
-@app.callback(
-    Output("wizard-data-input-remove-upload-data", "children"),
-    Output("wizard-data-output-parsed-data-before", "children"),
-    Output("wizard-data-output-parsed-data-after", "children"),
-    Output("wizard-data-input-remove-data", "children"),
-    Output("wizard_data_input_submit-button", "style"),
-    Input("wizard_data_input_remove-data-button", "n_clicks"),
-)
-def remove_file_wizard_data_data_file(n):
-
-    if n is None:
-        return no_update
-
-    child = [
-        html.Div("Upload data"),
-        dcc.Upload(
-            id="wizard-data-input-upload-data",
-            children=html.Div(
-                ["Drag and Drop or Select Files"],
-                id="wizard-data-output-upload-data-filename",
-            ),
-            multiple=False,
-        ),
-        html.Div(id="wizard-data-input-remove-data"),
-    ]
-    table = None
-    remove = None
-    return child, table, table, remove, {"display": "none"}
-
-
-@app.callback(
-    Output("wizard-data-output-parsed-params", "children", allow_duplicate=True),
-    Output("wizard-data-output-upload-params-filename", "children"),
-    Output("wizard-data-input-remove-params", "children", allow_duplicate=True),
-    Output("warning-upload-body", "children", allow_duplicate=True),
-    Output("warning-upload", "is_open", allow_duplicate=True),
-    Input("wizard-data-input-upload-params", "contents"),
-    State("wizard-data-input-upload-params", "filename"),
-    State("wizard-data-input-upload-params", "last_modified"),
-    prevent_initial_call=True,
-)
-def update_wizard_data_output_params(contents_params, name_params, date_params):
-
-    if contents_params is not None:
-        child = [
-            parse_file_wizard_data_params(c, n, d)[0]
-            for c, n, d in zip([contents_params], [name_params], [date_params])
-        ]
-
-        warnings_children = [
-            parse_file_wizard_data_params(c, n, d)[1]
-            for c, n, d in zip([contents_params], [name_params], [date_params])
-        ][0]
-        is_open = [
-            parse_file_wizard_data_params(c, n, d)[2]
-            for c, n, d in zip([contents_params], [name_params], [date_params])
-        ][0]
-        remove = html.Button(
-            id="wizard_data_input_remove-params-button",
-            className="remove-button",
-            children="Remove",
-        )
-        return child, name_params, remove, warnings_children, is_open
-    else:
-        raise PreventUpdate
-
-
-@app.callback(
-    Output("wizard-data-input-remove-upload-params", "children"),
-    Output("wizard-data-output-parsed-params", "children"),
-    Output("wizard-data-input-remove-params", "children"),
-    Input("wizard_data_input_remove-params-button", "n_clicks"),
-)
-def remove_file_wizard_data_params_file(n):
-
-    if n is None:
-        return no_update
-
-    child = [
-        html.Div("Upload data"),
-        dcc.Store(id="wizard_state_stored-params", data=None),
-        dcc.Upload(
-            id="wizard-data-input-upload-params",
-            children=html.Div(
-                ["Drag and Drop or Select Files"],
-                id="wizard-data-output-upload-params-filename",
-            ),
-            multiple=False,
-        ),
-        html.Div(id="wizard-data-input-remove-params"),
-    ]
-    table = None
-    remove = None
-    return child, table, remove
-
-
-def get_delimiter(data):
-    sniffer = csv.Sniffer()
-    data = data.decode("utf-8")
-    delimiter = sniffer.sniff(data).delimiter
-    return delimiter
-
-
-def parse_file_wizard_data_data(contents, filename, date, delimiter, dec):
-
-    warnings_children = html.Div([])
-    is_open = False
-
-    content_type, content_string = contents.split(",")
-    decoded = base64.b64decode(content_string)
-
-    if not delimiter:
-        delimiter = get_delimiter(decoded)
-
-    if not dec:
-        dec = "."
-
-    try:
-        if filename.endswith(".csv"):
-            # Assume that the user uploaded a CSV file
-            df = pd.read_csv(
-                io.StringIO(decoded.decode("utf-8")), sep=delimiter, decimal=dec
-            )
-            global data
-            data = df
-        elif filename.endswith(".xls"):
-            # Assume that the user uploaded an excel file
-            df = pd.read_excel(io.BytesIO(decoded))
-        else:
-            # return "Prevent update - Please upload a file with the .csv or .xls extension"
-            warnings_children = html.Div(
-                ["Please upload a file with the .csv or .xls extension"]
-            )
-            is_open = True
-            return html.Div([]), warnings_children, is_open
-    except Exception as e:
-        # print(e)
-        # return 'Prevent update - There was an error processing this file.'
-        warnings_children = html.Div(["There was an error processing this file."])
-        is_open = True
-        return html.Div([]), warnings_children, is_open
-
-    return (
-        html.Div(
-            [
-                dash_table.DataTable(
-                    data=df.to_dict("records"),
-                    columns=[{"name": i, "id": i} for i in df.columns],
-                    style_cell={"textAlign": "left"},
-                    page_size=8,
-                ),
-                # html.Button("Submit", id='wizard_data_input_submit-button'),
-                # html.Button(id="wizard_data_input_submit-button", children="Submit", n_clicks=0),
-                # html.Button('Submit', id='submit-button', n_clicks=0),
-                dcc.Store(id="wizard_state_stored-data", data=df.to_dict("records")),
-            ]
-        ),
-        warnings_children,
-        is_open,
-    )
-
-
-def parse_file_wizard_data_params(contents, filename, date):
-    content_type, content_string = contents.split(",")
-    decoded = base64.b64decode(content_string)
-    warnings_children = html.Div([])
-    is_open = False
-
-    try:
-        if filename.endswith(".json"):
-            content_dict = json.loads(decoded)
-            global params_g
-            params_g = content_dict
-        else:
-            # return "Prevent update - Please upload a file with the .json extension"
-            warnings_children = html.Div(
-                ["Please upload a file with the .json extension"]
-            )
-            is_open = True
-            return html.Div([]), warnings_children, is_open
-    except Exception as e:
-        # print(e)
-        warnings_children = html.Div(["There was an error processing this file."])
-        is_open = True
-        return html.Div([]), warnings_children, is_open
-
-    return (
-        html.Div(
-            [
-                dcc.Store(id="wizard_state_stored-params", data=content_dict),
-            ]
-        ),
-        warnings_children,
-        is_open,
-    )
-
-
-def check_parameters_wizard_data_files(data, params, param_keys):
-
-    criteria = list(data[0].keys())
-
-    df_data = pd.DataFrame.from_dict(data).set_index(criteria[0])
-    df_params = pd.DataFrame.from_dict(params)
-
-    n_alternatives = df_data.shape[0]
-    m_criteria = df_data.shape[1]
-
-    if param_keys[1] in df_params:
-        if len(df_params[param_keys[1]]) != m_criteria:
-            if args.debug:
-                print("Invalid value 'weights'.")
-            return -1
-        if not all(
-            type(item) in [int, float, np.float64] for item in df_params[param_keys[1]]
-        ):
-            if args.debug:
-                print(
-                    "Invalid value 'weights'. Expected numerical value (int or float)."
-                )
-            return -1
-        if not all(item >= 0 for item in df_params[param_keys[1]]):
-            if args.debug:
-                print("Invalid value 'weights'. Expected value must be non-negative.")
-            return -1
-        if not any(item > 0 for item in df_params[param_keys[1]]):
-            if args.debug:
-                print("Invalid value 'weights'. At least one weight must be positive.")
-            return -1
-    else:
-        return -1
-
-    if param_keys[4] in df_params:
-        if len(df_params[param_keys[4]]) != m_criteria:
-            if args.debug:
-                print("Invalid value 'objectives'.")
-            return -1
-        if not all(item in ["min", "max"] for item in df_params[param_keys[4]]):
-            if args.debug:
-                print(
-                    "Invalid value at 'objectives'. Use 'min', 'max', 'gain', 'cost', 'g' or 'c'."
-                )
-            return -1
-    else:
-        return -1
-
-    if param_keys[2] in df_params and param_keys[3] in df_params:
-        if len(df_params[param_keys[2]]) != m_criteria:
-            if args.debug:
-                print(
-                    "Invalid value at 'expert_range'. Length of should be equal to number of criteria."
-                )
-            return -1
-        if len(df_params[param_keys[3]]) != m_criteria:
-            if args.debug:
-                print(
-                    "Invalid value at 'expert_range'. Length of should be equal to number of criteria."
-                )
-            return -1
-        if not all(
-            type(item) in [int, float, np.float64] for item in df_params[param_keys[2]]
-        ):
-            if args.debug:
-                print(
-                    "Invalid value at 'expert_range'. Expected numerical value (int or float)."
-                )
-            return -1
-        if not all(
-            type(item) in [int, float, np.float64] for item in df_params[param_keys[3]]
-        ):
-            if args.debug:
-                print(
-                    "Invalid value at 'expert_range'. Expected numerical value (int or float)."
-                )
-            return -1
-
-        lower_bound = df_data.min()
-        upper_bound = df_data.max()
-
-        for lower, upper, mini, maxi in zip(
-            lower_bound, upper_bound, df_params[param_keys[2]], df_params[param_keys[3]]
-        ):
-            if mini > maxi:
-                if args.debug:
-                    print(
-                        "Invalid value at 'expert_range'. Minimal value  is bigger then maximal value."
-                    )
-                return -1
-            if lower < mini:
-                if args.debug:
-                    print(
-                        "Invalid value at 'expert_range'. All values from original data must be in a range of expert_range."
-                    )
-                return -1
-            if upper > maxi:
-                if args.debug:
-                    print(
-                        "Invalid value at 'expert_range'. All values from original data must be in a range of expert_range."
-                    )
-                return -1
-    else:
-        return -1
-
-    return 1
-
-
-def return_columns_wizard_parameters_params_table(param_keys):
-    columns = [
-        {"id": "criterion", "name": "Criterion", "type": "text", "editable": False},
-        {"id": param_keys[1], "name": "Weight", "type": "numeric"},
-        {"id": param_keys[2], "name": "Expert Min", "type": "numeric"},
-        {"id": param_keys[3], "name": "Expert Max", "type": "numeric"},
-        {"id": param_keys[4], "name": "Objective", "presentation": "dropdown"},
-    ]
-
-    return columns
-
-
-def fill_parameters_wizard_parameters_params(params, df, param_keys):
-
-    if params is None:
-        m_criteria = df.shape[1]
-        return np.ones(m_criteria), df.min(), df.max(), np.repeat("max", m_criteria)
-    else:
-        weights = list(params[param_keys[1]].values())
-        mins = list(params[param_keys[2]].values())
-        maxs = list(params[param_keys[3]].values())
-        objectives = list(params[param_keys[4]].values())
-
-        return weights, mins, maxs, objectives
 
 
 @app.callback(
@@ -3128,6 +2722,8 @@ app.layout = dbc.Container(
 app.title = "Postfactum Analysis Dashboard"
 app._favicon = "img/pad_logo.png"
 
+upload.get_callbacks(app)
+
 
 @app.callback(
     Output("page-content", "children", allow_duplicate=True),
@@ -3136,9 +2732,9 @@ app._favicon = "img/pad_logo.png"
 )
 def display_page(pathname):
     if pathname == "/":
-        return home_page_layout(app)
+        return homepage.layout(app)
     elif pathname == "/upload":
-        return upload_layout(app)
+        return upload.layout(app)
     elif pathname == "/main_dash_layout":
         return main_dash_layout()
     elif pathname == "/playground":

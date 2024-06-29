@@ -4,7 +4,7 @@ from dash import html
 from components.common import stepper_layout
 
 
-def home_page_layout(app):
+def layout(app):
     """
     Generates the layout for the home page of the TOPSIS Postfactum Dashboard.
 
