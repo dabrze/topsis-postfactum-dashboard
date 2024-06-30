@@ -174,7 +174,7 @@ ul.navbar-nav {
 }
 
 .step-slogan {
-    color: #1ec283;
+    color: #F77A18;
     font-size: 2rem;
     font-weight: bold;
     margin-left: 0.25rem;
@@ -240,7 +240,7 @@ div.checkbox label {
 }
 
 .stepper-form-controls {
-    margin-top: 1.5625rem;
+    margin-top: 1rem;
 }
 
 .blockLabel {
@@ -309,13 +309,23 @@ div.checkbox label {
     ;
 }
 
+.btn.btn-primary[disabled] {
+    background-color: #aaa;
+    border-color: #aaa;
+    cursor: default;
+}
+
+.help-msg {
+    font-style: italic;
+    color: #777;
+}
+
 .dropzone {
     margin: 0.3125rem;
     border: 0.125rem dashed #999 !important;
     border-image: none;
     text-align: center;
     padding: 0.625rem;
-    max-height: 9.375rem;
     min-height: 150px;
 }
 
@@ -329,7 +339,7 @@ div.checkbox label {
 
 .dropzone .dz-message {
     text-align: center;
-    margin: 2em 0;
+    margin-top: 1em;
 }
 
 .dropzone div .dz-remove {
@@ -339,6 +349,26 @@ div.checkbox label {
     cursor: pointer;
     border: none;
 }
+
+.dropzone .dz-success-mark i {
+    font-size: 3rem;
+    color: #1ec283;
+    font-weight: bold;
+    /* #1ec283; */
+}
+
+/* .dropzone .dz-success-mark svg,
+.dropzone .dz-error-mark svg {
+    width: 5rem;
+    height: 5rem;
+}
+
+.dropzone .dz-success-mark,
+.dropzone .dz-error-mark {
+    margin-left: -2.5rem;
+    margin-top: -2.5rem;
+
+} */
 
 .card-header {
     text-align: center;

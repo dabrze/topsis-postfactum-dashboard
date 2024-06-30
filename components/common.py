@@ -1,7 +1,6 @@
 import dash_bootstrap_components as dbc
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
-from dash import html
-
+from dash import html, dash_table
 
 EXTERNAL_STYLESHEETS = [
     dbc.themes.BOOTSTRAP,
@@ -132,7 +131,13 @@ def footer():
 
 
 def stepper_layout(
-    app, step1_state="", step2_state="", step3_state="", step4_state="", content=""
+    app,
+    step1_state="",
+    step2_state="",
+    step3_state="",
+    step4_state="",
+    content="",
+    show_background=True,
 ):
     """
     Generates the stepper layout component for the dashboard.
@@ -210,12 +215,15 @@ def stepper_layout(
                     html.Div(content, className="bs-stepper-content"),
                 ],
                 id="submit-stepper",
-                className="bs-stepper vertical col-lg-8 col-md-12",
+                className=f"bs-stepper vertical {'col-lg-8' if show_background else 'col-lg-12'} col-md-12",
             ),
             html.Div(
                 html.Img(
                     id="pad-background",
                     className="img-fluid",
+                    style={
+                        "display": f"{'none' if not show_background else 'inherit'}"
+                    },
                     src=app.get_asset_url("img/pad_schematic.png"),
                     alt="Postfactum splash",
                 ),
@@ -223,4 +231,19 @@ def stepper_layout(
             ),
         ],
         className="row",
+    )
+
+
+def styled_datatable(df):
+    return dash_table.DataTable(
+        data=df.to_dict("records"),
+        columns=[{"name": i, "id": i} for i in df.columns],
+        editable=False,
+        sort_action="native",
+        page_action="native",
+        page_size=10,
+        style_as_list_view=True,
+        style_cell={"padding": "5px"},
+        style_header={"backgroundColor": "white", "fontWeight": "bold"},
+        style_table={"overflowX": "auto"},
     )
