@@ -169,7 +169,24 @@ def get_callbacks(app):
         Output("upload-csv-checkmark", "style"),
         Output("upload-csv-remove-btn", "style"),
         Output("upload-submit-btn", "disabled"),
+        Input("data-store", "data"),
+        State("data-filename-store", "data"),
+    )
+    def update_csv_store(store_data, file_name):
+        if store_data is not None or file_name is not None:
+            df = pd.DataFrame.from_dict(store_data)
+            table = styled_datatable(df)
+
+            return table, True, file_name, SHOW, SHOW, False
+        else:
+            preview_msg = preview_default_message()
+            upload_msg = upload_default_message()
+
+            return preview_msg, False, upload_msg, HIDE, HIDE, True
+
+    @app.callback(
         Output("data-store", "data"),
+        Output("data-filename-store", "data"),
         Input("upload-csv-data", "contents"),
         State("upload-csv-data", "filename"),
     )
@@ -178,21 +195,15 @@ def get_callbacks(app):
             df, message = parse_data_file(file_data, file_name)
 
             if df is not None:
-                table = styled_datatable(df)
-
-                return table, True, file_name, SHOW, SHOW, False, df.to_dict("records")
+                return df.to_dict("records"), file_name
             else:
-                return preview_default_message(), False, message, HIDE, HIDE, True, None
+                return None, None
         else:
-            preview_msg = preview_default_message()
-            upload_msg = upload_default_message()
-
-            return preview_msg, False, upload_msg, HIDE, HIDE, True, None
+            return None, None
 
     @app.callback(
         Output("upload-csv-data", "contents"),
         Input("upload-csv-remove-btn", "n_clicks"),
-        prevent_initial_call=True,
     )
     def remove_data_file(n):
         if n is None:
@@ -206,7 +217,18 @@ def get_callbacks(app):
         Output("upload-params-message", "children"),
         Output("upload-params-checkmark", "style"),
         Output("upload-params-remove-btn", "style"),
+        Input("params-store", "data"),
+        State("params-filename-store", "data"),
+    )
+    def update_params_store(params_dict, file_name):
+        if params_dict is not None or file_name is not None:
+            return None, True, file_name, SHOW, SHOW
+        else:
+            return None, False, upload_default_message(), HIDE, HIDE
+
+    @app.callback(
         Output("params-store", "data"),
+        Output("params-filename-store", "data"),
         Input("upload-params-data", "contents"),
         State("upload-params-data", "filename"),
     )
@@ -215,11 +237,9 @@ def get_callbacks(app):
             params_dict, message = parse_params_file(file_data, file_name)
 
             if params_dict is not None:
-                return None, True, file_name, SHOW, SHOW, params_dict
-            else:
-                return None, False, message, HIDE, HIDE, None
-        else:
-            return None, False, upload_default_message(), HIDE, HIDE, None
+                return params_dict, file_name
+
+        return None, None
 
     @app.callback(
         Output("upload-params-data", "contents"),
