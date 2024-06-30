@@ -32,6 +32,9 @@ EXTERNAL_SCRIPTS = [
     },
 ]
 
+SHOW = {"display": "block"}
+HIDE = {"display": "none"}
+
 
 def header(app):
     """

@@ -10,7 +10,7 @@ from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 from dash import no_update
 
-from components.common import stepper_layout, styled_datatable
+from components.common import HIDE, SHOW, stepper_layout, styled_datatable
 from processing.data_functions import parse_data_file, parse_params_file
 
 
@@ -163,53 +163,34 @@ def layout(app):
 
 def get_callbacks(app):
     @app.callback(
-        Output("upload-csv-data-preview", "children", allow_duplicate=True),
-        Output("upload-csv-data", "disable_click", allow_duplicate=True),
-        Output("upload-csv-message", "children", allow_duplicate=True),
-        Output("upload-csv-checkmark", "style", allow_duplicate=True),
-        Output("upload-csv-remove-btn", "style", allow_duplicate=True),
-        Output("upload-submit-btn", "disabled", allow_duplicate=True),
-        Output("data-store", "data", allow_duplicate=True),
+        Output("upload-csv-data-preview", "children"),
+        Output("upload-csv-data", "disable_click"),
+        Output("upload-csv-message", "children"),
+        Output("upload-csv-checkmark", "style"),
+        Output("upload-csv-remove-btn", "style"),
+        Output("upload-submit-btn", "disabled"),
+        Output("data-store", "data"),
         Input("upload-csv-data", "contents"),
         State("upload-csv-data", "filename"),
-        prevent_initial_call=True,
     )
     def update_csv_data(file_data, file_name):
         if file_data is not None:
             df, message = parse_data_file(file_data, file_name)
 
             if df is not None:
-                return (
-                    styled_datatable(df),
-                    True,
-                    file_name,
-                    {"display": "block"},
-                    {"display": "block"},
-                    False,
-                    df.to_dict("records"),
-                )
+                table = styled_datatable(df)
+
+                return table, True, file_name, SHOW, SHOW, False, df.to_dict("records")
             else:
-                return (
-                    None,
-                    False,
-                    message,
-                    {"display": "none"},
-                    {"display": "none"},
-                    True,
-                    None,
-                )
+                return preview_default_message(), False, message, HIDE, HIDE, True, None
         else:
-            raise PreventUpdate
+            preview_msg = preview_default_message()
+            upload_msg = upload_default_message()
+
+            return preview_msg, False, upload_msg, HIDE, HIDE, True, None
 
     @app.callback(
-        Output("upload-csv-message", "children", allow_duplicate=True),
-        Output("upload-csv-data", "disable_click", allow_duplicate=True),
-        Output("upload-csv-data", "contents", allow_duplicate=True),
-        Output("upload-csv-data-preview", "children", allow_duplicate=True),
-        Output("upload-csv-checkmark", "style", allow_duplicate=True),
-        Output("upload-csv-remove-btn", "style", allow_duplicate=True),
-        Output("upload-submit-btn", "disabled", allow_duplicate=True),
-        Output("data-store", "data", allow_duplicate=True),
+        Output("upload-csv-data", "contents"),
         Input("upload-csv-remove-btn", "n_clicks"),
         prevent_initial_call=True,
     )
@@ -217,57 +198,35 @@ def get_callbacks(app):
         if n is None:
             return no_update
         else:
-            return (
-                upload_default_message(),
-                False,
-                None,
-                preview_default_message(),
-                {"display": "none"},
-                {"display": "none"},
-                True,
-                None,
-            )
+            return None
 
     @app.callback(
-        Output("upload-params-data-preview", "children", allow_duplicate=True),
-        Output("upload-params-data", "disable_click", allow_duplicate=True),
-        Output("upload-params-message", "children", allow_duplicate=True),
-        Output("upload-params-remove-btn", "style", allow_duplicate=True),
-        Output("params-store", "data", allow_duplicate=True),
+        Output("upload-params-data-preview", "children"),
+        Output("upload-params-data", "disable_click"),
+        Output("upload-params-message", "children"),
+        Output("upload-params-checkmark", "style"),
+        Output("upload-params-remove-btn", "style"),
+        Output("params-store", "data"),
         Input("upload-params-data", "contents"),
         State("upload-params-data", "filename"),
-        prevent_initial_call=True,
     )
     def update_params_data(file_data, file_name):
         if file_data is not None:
             params_dict, message = parse_params_file(file_data, file_name)
 
             if params_dict is not None:
-                return None, True, file_name, {"display": "block"}, params_dict
+                return None, True, file_name, SHOW, SHOW, params_dict
             else:
-                return None, False, message, {"display": "none"}, None
+                return None, False, message, HIDE, HIDE, None
         else:
-            raise PreventUpdate
+            return None, False, upload_default_message(), HIDE, HIDE, None
 
     @app.callback(
-        Output("upload-params-message", "children", allow_duplicate=True),
-        Output("upload-params-data", "disable_click", allow_duplicate=True),
-        Output("upload-params-data", "contents", allow_duplicate=True),
-        Output("upload-params-data-preview", "children", allow_duplicate=True),
-        Output("upload-params-remove-btn", "style", allow_duplicate=True),
-        Output("params-store", "data", allow_duplicate=True),
-        Input("upload-csv-remove-btn", "n_clicks"),
-        prevent_initial_call=True,
+        Output("upload-params-data", "contents"),
+        Input("upload-params-remove-btn", "n_clicks"),
     )
     def remove_params_file(n):
         if n is None:
             return no_update
         else:
-            return (
-                upload_default_message(),
-                False,
-                None,
-                None,
-                {"display": "none"},
-                None,
-            )
+            return None

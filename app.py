@@ -34,29 +34,6 @@ global title
 title = "Postfactum Analysis Dashboard"
 
 
-homemodal = dbc.Modal(
-    [
-        dbc.ModalHeader("Home"),
-        dbc.ModalBody("Do you want to discard changes and go back to home page?"),
-        dbc.ModalFooter(
-            [
-                dcc.Link(
-                    html.Button(
-                        "Discard changes",
-                        id="discard-button",
-                        className="modal-buttons",
-                    ),
-                    href="/",
-                ),
-                html.Button("Cancel", id="cancel-button", className="modal-buttons"),
-            ]
-        ),
-    ],
-    centered=True,
-    id="home-modal",
-)
-
-
 # ==============================================================
 #   WIZARD
 # ==============================================================
@@ -65,230 +42,6 @@ homemodal = dbc.Modal(
 def wizard():
     return html.Div(
         [
-            # Data before Submit
-            html.Div(
-                [
-                    html.Div(
-                        [
-                            html.Div(
-                                [
-                                    html.Div(
-                                        className="progress-bar",
-                                        children=[
-                                            html.Div(
-                                                className="progress-step",
-                                                children=[
-                                                    html.Div(
-                                                        className="step-circle blue-circle"
-                                                    ),
-                                                    html.Div(
-                                                        "Upload", className="step-label"
-                                                    ),
-                                                ],
-                                            ),
-                                            html.Div(className="progress-line"),
-                                            html.Div(
-                                                className="progress-step",
-                                                children=[
-                                                    html.Div(className="step-circle"),
-                                                    html.Div(
-                                                        "Data", className="step-label"
-                                                    ),
-                                                ],
-                                            ),
-                                            html.Div(className="progress-line"),
-                                            html.Div(
-                                                className="progress-step",
-                                                children=[
-                                                    html.Div(className="step-circle"),
-                                                    html.Div(
-                                                        "Parameters",
-                                                        className="step-label",
-                                                    ),
-                                                ],
-                                            ),
-                                            html.Div(className="progress-line"),
-                                            html.Div(
-                                                className="progress-step",
-                                                children=[
-                                                    html.Div(className="step-circle"),
-                                                    html.Div(
-                                                        "Model", className="step-label"
-                                                    ),
-                                                ],
-                                            ),
-                                        ],
-                                    )
-                                ],
-                                className="side-bar",
-                            ),
-                            html.Div(
-                                [
-                                    html.Div(
-                                        [
-                                            html.Div(
-                                                "Here you can upload your csv file with data and see its preview",
-                                                className="info",
-                                            ),
-                                            html.Div(
-                                                "You can also upload parameters file if you already have one or set them later",
-                                                className="info",
-                                            ),
-                                            html.Div(
-                                                "If your dataset is not displaying correctly (e.g. whole table is in one column) try to change decimal point or delimiter",
-                                                className="info",
-                                            ),
-                                        ],
-                                        className="info-container",
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.Div(
-                                                [
-                                                    html.Div(
-                                                        [
-                                                            html.Div("Decimal:"),
-                                                            html.Div(
-                                                                html.I(
-                                                                    className="fa-solid fa-question fa-xs"
-                                                                ),
-                                                                id="decimal-help",
-                                                            ),
-                                                            dbc.Tooltip(
-                                                                "Enter decimal point in your dataset",
-                                                                target="decimal-help",
-                                                            ),
-                                                        ],
-                                                        className="css-help",
-                                                    ),
-                                                    dcc.Input(
-                                                        id="wizard-data-input-decimal",
-                                                        type="text",
-                                                        placeholder=".",
-                                                        minLength=0,
-                                                        maxLength=1,
-                                                    ),
-                                                    html.Div(
-                                                        [
-                                                            html.Div("Delimiter:"),
-                                                            html.Div(
-                                                                html.I(
-                                                                    className="fa-solid fa-question fa-xs"
-                                                                ),
-                                                                id="delimiter-help",
-                                                            ),
-                                                            dbc.Tooltip(
-                                                                "Enter delimiter in your dataset",
-                                                                target="delimiter-help",
-                                                            ),
-                                                        ],
-                                                        className="css-help",
-                                                    ),
-                                                    dcc.Input(
-                                                        id="wizard-data-input-delimiter",
-                                                        type="text",
-                                                        placeholder=",",
-                                                        minLength=0,
-                                                        maxLength=1,
-                                                    ),
-                                                ],
-                                                id="input-container",
-                                            ),
-                                            html.Div(
-                                                [
-                                                    html.Div("Upload data:"),
-                                                    dcc.Store(
-                                                        id="wizard_state_stored-data",
-                                                        data=None,
-                                                    ),
-                                                    dcc.Upload(
-                                                        id="wizard-data-input-upload-data",
-                                                        children=html.Div(
-                                                            [
-                                                                "Drag and Drop or Select Files"
-                                                            ],
-                                                            id="wizard-data-output-upload-data-filename",
-                                                        ),
-                                                        multiple=False,
-                                                    ),
-                                                    html.Div(
-                                                        id="wizard-data-input-remove-data"
-                                                    ),
-                                                ],
-                                                id="wizard-data-input-remove-upload-data",
-                                            ),
-                                            html.Div(
-                                                [
-                                                    html.Div(
-                                                        "Upload parameters (optional):"
-                                                    ),
-                                                    dcc.Store(
-                                                        id="wizard_state_stored-params",
-                                                        data=None,
-                                                    ),
-                                                    dcc.Upload(
-                                                        id="wizard-data-input-upload-params",
-                                                        children=html.Div(
-                                                            [
-                                                                "Drag and Drop or Select Files"
-                                                            ],
-                                                            id="wizard-data-output-upload-params-filename",
-                                                        ),
-                                                        multiple=False,
-                                                    ),
-                                                    html.Div(
-                                                        id="wizard-data-input-remove-params"
-                                                    ),
-                                                ],
-                                                id="wizard-data-input-remove-upload-params",
-                                            ),
-                                        ],
-                                        id="input-upload-container",
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.Div(
-                                                id="wizard-data-output-parsed-data-before"
-                                            ),
-                                            html.Div(
-                                                id="wizard-data-output-parsed-params"
-                                            ),
-                                            html.Div(id="data-preview"),
-                                        ],
-                                        id="data-preview-content",
-                                    ),
-                                    html.Div(
-                                        id="data-table", style={"display": "none"}
-                                    ),
-                                    html.Div(
-                                        html.Button(
-                                            "Submit",
-                                            id="wizard_data_input_submit-button",
-                                            className="submit-button",
-                                            style={"display": "none"},
-                                        ),
-                                        id="nav-buttons",
-                                    ),
-                                    dbc.Modal(
-                                        [
-                                            dbc.ModalHeader("Warning"),
-                                            dbc.ModalBody(id="warning-upload-body"),
-                                        ],
-                                        id="warning-upload",
-                                        size="sm",
-                                        centered=True,
-                                    ),
-                                    homemodal,
-                                ],
-                                className="page-with-side-bar",
-                            ),
-                        ],
-                        className="vertical-page",
-                    )
-                ],
-                id="data_upload_layout",
-                style={"display": "block"},
-            ),
             # Data after Submit
             html.Div(
                 [
@@ -1406,7 +1159,6 @@ def main_dash_layout():
                 size="sm",
                 centered=True,
             ),
-            homemodal,
         ]
     )
 
@@ -2712,7 +2464,9 @@ app.layout = dbc.Container(
         dcc.Location(id="url", refresh=False),
         html.Div(id="page-content", className="container"),
         dcc.Store(id="data-store", storage_type="session"),
+        dcc.Store(id="data-filename-store", storage_type="session"),
         dcc.Store(id="params-store", storage_type="session"),
+        dcc.Store(id="params-filename-store", storage_type="session"),
         footer(),
     ],
     id="pad-layout",
