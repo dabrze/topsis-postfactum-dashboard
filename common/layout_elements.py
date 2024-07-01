@@ -1,6 +1,7 @@
+import dash
 import dash_bootstrap_components as dbc
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
-from dash import html, dash_table
+from dash import html, dash_table, dcc
 
 EXTERNAL_STYLESHEETS = [
     dbc.themes.BOOTSTRAP,
@@ -134,7 +135,6 @@ def footer():
 
 
 def stepper_layout(
-    app,
     step1_state="",
     step2_state="",
     step3_state="",
@@ -227,7 +227,7 @@ def stepper_layout(
                     style={
                         "display": f"{'none' if not show_background else 'inherit'}"
                     },
-                    src=app.get_asset_url("img/pad_schematic.png"),
+                    src=dash.get_asset_url("img/pad_schematic.png"),
                     alt="Postfactum splash",
                 ),
                 className="col-lg-4 d-none d-lg-block",
@@ -249,4 +249,70 @@ def styled_datatable(df):
         style_cell={"padding": "5px"},
         style_header={"backgroundColor": "white", "fontWeight": "bold"},
         style_table={"overflowX": "auto"},
+    )
+
+
+def upload_default_message():
+    return [
+        html.Br(),
+        html.I(className="fa-solid fa-cloud-arrow-up"),
+        " Drop file here or",
+        html.Br(),
+        "click to upload...",
+    ]
+
+
+def preview_default_message():
+    return html.Span("Upload data to see preview", className="help-msg")
+
+
+def upload_card(
+    title,
+    upload_id,
+    message_div_id,
+    checkmark_div_id,
+    remove_btn_id,
+    filetypes,
+    multiple=False,
+    optional=False,
+):
+    addional_class = "optional" if optional else ""
+
+    return html.Div(
+        html.Div(
+            html.Div(
+                [
+                    html.H5(title, className="card-title"),
+                    dcc.Upload(
+                        [
+                            html.Div(
+                                upload_default_message(),
+                                className="dz-default dz-message",
+                                id=f"{message_div_id}",
+                            ),
+                            html.Div(
+                                html.I(className="fas fa-check"),
+                                className="dz-success-mark",
+                                style={"display": "none"},
+                                id=f"{checkmark_div_id}",
+                            ),
+                            html.A(
+                                id=f"{remove_btn_id}",
+                                className="dz-remove",
+                                children="Remove file",
+                                style={"display": "none"},
+                            ),
+                        ],
+                        multiple=multiple,
+                        accept=f"{filetypes}",
+                        className="dropzone dz-clickable",
+                        id=upload_id,
+                        max_size=5000000,  # 5MB
+                    ),
+                ],
+                className="card-body",
+            ),
+            className=f"card drop-card {addional_class}",
+        ),
+        className="col-lg-6",
     )

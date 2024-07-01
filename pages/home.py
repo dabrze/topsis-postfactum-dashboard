@@ -1,24 +1,23 @@
+import dash
+
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
 from dash import html
 
-from components.common import stepper_layout
+from common.layout_elements import stepper_layout
+
+dash.register_page(
+    __name__,
+    path="/",
+    title="Postfactum Analysis Dashboard",
+    description="TOPSIS visualization and postfactum analysis dashboard.",
+    image="img/pad_logo.png",
+)
 
 
-def layout(app):
-    """
-    Generates the layout for the home page of the TOPSIS Postfactum Dashboard.
-
-    Args:
-        app (dash.Dash): The Dash application object.
-
-    Returns:
-        dash.html.Div: The generated HTML layout for the home page.
-    """
-    return stepper_layout(
-        app,
-        step1_state="active",
-        content=DangerouslySetInnerHTML(
-            """
+layout = stepper_layout(
+    step1_state="active",
+    content=DangerouslySetInnerHTML(
+        """
     <div class="panel task-select-table">
         <div class="row">
                 <div class="col-md-6 task-panel"">
@@ -47,5 +46,5 @@ def layout(app):
         </div>
     </div>
                           """
-        ),
-    )
+    ),
+)
