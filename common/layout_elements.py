@@ -2,6 +2,7 @@ import dash
 import dash_bootstrap_components as dbc
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
 from dash import html, dash_table, dcc
+import dash_daq as daq
 
 EXTERNAL_STYLESHEETS = [
     dbc.themes.BOOTSTRAP,
@@ -33,6 +34,8 @@ EXTERNAL_SCRIPTS = [
     },
 ]
 
+NO_STYLE = {}
+INVISIBLE = {"visibility": "hidden"}
 SHOW = {"display": "block"}
 HIDE = {"display": "none"}
 
@@ -162,7 +165,7 @@ def stepper_layout(
                     html.Div(
                         [
                             html.Div(
-                                html.Div(
+                                html.A(
                                     [
                                         html.Span("1", className="bs-stepper-circle"),
                                         html.Span(
@@ -170,12 +173,13 @@ def stepper_layout(
                                         ),
                                     ],
                                     className="step-trigger",
+                                    href="/",
                                 ),
                                 className=f"step {step1_state}",
                             ),
                             html.Div(className="line"),
                             html.Div(
-                                html.Div(
+                                html.A(
                                     [
                                         html.Span("2", className="bs-stepper-circle"),
                                         html.Span(
@@ -183,12 +187,13 @@ def stepper_layout(
                                         ),
                                     ],
                                     className="step-trigger",
+                                    href="/upload",
                                 ),
                                 className=f"step {step2_state}",
                             ),
                             html.Div(className="line"),
                             html.Div(
-                                html.Div(
+                                html.A(
                                     [
                                         html.Span("3", className="bs-stepper-circle"),
                                         html.Span(
@@ -196,12 +201,13 @@ def stepper_layout(
                                         ),
                                     ],
                                     className="step-trigger",
+                                    href="/criteria",
                                 ),
                                 className=f"step {step3_state}",
                             ),
                             html.Div(className="line"),
                             html.Div(
-                                html.Div(
+                                html.A(
                                     [
                                         html.Span("4", className="bs-stepper-circle"),
                                         html.Span(
@@ -209,6 +215,7 @@ def stepper_layout(
                                         ),
                                     ],
                                     className="step-trigger",
+                                    href="/model",
                                 ),
                                 className=f"step {step4_state}",
                             ),
@@ -262,8 +269,12 @@ def upload_default_message():
     ]
 
 
-def preview_default_message():
+def data_preview_default_message():
     return html.Span("Upload data to see preview", className="help-msg")
+
+
+def settings_preview_default_message():
+    return html.Span("Upload settings file to see preview", className="help-msg")
 
 
 def upload_card(
@@ -316,3 +327,130 @@ def upload_card(
         ),
         className="col-lg-6",
     )
+
+
+def create_criteria_table(params_dict, disabled=False):
+    criteria_table_header = html.Thead(
+        html.Tr(
+            [
+                html.Th("Criterion", className="text-start"),
+                html.Th("Id", className="text-center"),
+                html.Th("Weight", className="text-end"),
+                html.Th("Expert min", className="text-end"),
+                html.Th("Expert max", className="text-end"),
+                html.Th("Objective", className="text-center"),
+            ]
+        )
+    )
+    criteria_table_body = html.Tbody(
+        [
+            html.Tr(
+                [
+                    html.Td(
+                        children=criterion,
+                        id=(
+                            {"type": "criterion", "index": criterion}
+                            if not disabled
+                            else ""
+                        ),
+                    ),
+                    html.Td(
+                        daq.BooleanSwitch(
+                            id=(
+                                {"type": "id_column", "index": criterion}
+                                if not disabled
+                                else ""
+                            ),
+                            color="#0d6efd",
+                            on=params_dict[criterion]["id_column"] == "true",
+                        ),
+                    ),
+                    html.Td(
+                        (
+                            dcc.Input(
+                                id={"type": "weight", "index": criterion},
+                                value=params_dict[criterion]["weight"],
+                                type="number",
+                                min=0,
+                                className="form-control text-end",
+                            )
+                            if not disabled
+                            else html.Div(
+                                params_dict[criterion]["weight"],
+                                className="text-end",
+                                style=(
+                                    NO_STYLE
+                                    if params_dict[criterion]["id_column"] == "false"
+                                    else INVISIBLE
+                                ),
+                            )
+                        ),
+                    ),
+                    html.Td(
+                        (
+                            dcc.Input(
+                                id={"type": "expert_min", "index": criterion},
+                                value=params_dict[criterion]["expert_min"],
+                                type="number",
+                                className="form-control text-end",
+                            )
+                            if not disabled
+                            else html.Div(
+                                params_dict[criterion]["expert_min"],
+                                className="text-end",
+                                style=(
+                                    NO_STYLE
+                                    if params_dict[criterion]["id_column"] == "false"
+                                    else INVISIBLE
+                                ),
+                            )
+                        ),
+                    ),
+                    html.Td(
+                        dcc.Input(
+                            id={"type": "expert_max", "index": criterion},
+                            value=params_dict[criterion]["expert_max"],
+                            type="number",
+                            className="form-control text-end",
+                        )
+                        if not disabled
+                        else html.Div(
+                            params_dict[criterion]["expert_max"],
+                            className="text-end",
+                            style=(
+                                NO_STYLE
+                                if params_dict[criterion]["id_column"] == "false"
+                                else INVISIBLE
+                            ),
+                        )
+                    ),
+                    html.Td(
+                        daq.ToggleSwitch(
+                            id=(
+                                {"type": "objective", "index": criterion}
+                                if not disabled
+                                else ""
+                            ),
+                            label=["min", "max"],
+                            color="#1ec283",
+                            value=params_dict[criterion]["objective"] == "max",
+                            style=(
+                                NO_STYLE
+                                if params_dict[criterion]["id_column"] == "false"
+                                else INVISIBLE
+                            ),
+                        )
+                    ),
+                ]
+            )
+            for criterion in params_dict.keys()
+        ]
+    )
+
+    criteria_table = html.Table(
+        [criteria_table_header, criteria_table_body],
+        className="table table-striped table-responsive criteria-table",
+        style=NO_STYLE if not disabled else {"pointer-events": "none"},
+    )
+
+    return html.Div(criteria_table, className="col-lg-12 block-row")

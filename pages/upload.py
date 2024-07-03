@@ -1,9 +1,19 @@
 import pandas as pd
 import dash
-from dash import html, dcc, no_update, callback
+from dash import html, no_update, callback
 from dash.dependencies import Input, Output, State
 
-from common.layout_elements import *
+from common.layout_elements import (
+    HIDE,
+    SHOW,
+    create_criteria_table,
+    settings_preview_default_message,
+    stepper_layout,
+    upload_card,
+    data_preview_default_message,
+    upload_default_message,
+    styled_datatable,
+)
 from common.data_functions import parse_data_file, parse_params_file
 
 
@@ -19,7 +29,9 @@ layout = stepper_layout(
     show_background=False,
     content=[
         html.Div(
-            html.Div("Upload files:", className="col-lg-12 block-row"),
+            html.Div(
+                "Upload files:", className="col-lg-12 section-header first-header"
+            ),
             className="row",
         ),
         html.Div(
@@ -33,7 +45,7 @@ layout = stepper_layout(
                     filetypes=".csv, .xls, .xlsx",
                 ),
                 upload_card(
-                    title="JSON parameters (optional)",
+                    title="JSON settings (optional)",
                     upload_id="upload-params-data",
                     message_div_id="upload-params-message",
                     checkmark_div_id="upload-params-checkmark",
@@ -46,9 +58,9 @@ layout = stepper_layout(
         ),
         html.Div(
             [
-                html.Div("Dataset preview:", className="col-lg-12 block-row"),
+                html.Div("Dataset preview:", className="col-lg-12 section-header"),
                 html.Div(
-                    preview_default_message(),
+                    data_preview_default_message(),
                     id="upload-csv-data-preview",
                     className="col-lg-12",
                 ),
@@ -56,7 +68,14 @@ layout = stepper_layout(
             className="row block-row",
         ),
         html.Div(
-            html.Div(id="upload-params-data-preview", className="col-lg-12"),
+            [
+                html.Div("Settings preview:", className="col-lg-12 section-header"),
+                html.Div(
+                    settings_preview_default_message(),
+                    id="upload-params-data-preview",
+                    className="col-lg-12",
+                ),
+            ],
             className="row block-row",
         ),
         html.Div(
@@ -101,7 +120,7 @@ def update_csv_store(store_data, file_name):
 
         return table, True, file_name, SHOW, SHOW, False
     else:
-        preview_msg = preview_default_message()
+        preview_msg = data_preview_default_message()
         upload_msg = upload_default_message()
 
         return preview_msg, False, upload_msg, HIDE, HIDE, True
@@ -115,7 +134,7 @@ def update_csv_store(store_data, file_name):
 )
 def update_csv_data(file_data, file_name):
     if file_data is not None:
-        df, message = parse_data_file(file_data, file_name)
+        df = parse_data_file(file_data, file_name)
 
         if df is not None:
             return df.to_dict("records"), file_name
@@ -146,21 +165,27 @@ def remove_data_file(n):
     State("params-filename-store", "data"),
 )
 def update_params_store(params_dict, file_name):
-    if params_dict is not None or file_name is not None:
-        return None, True, file_name, SHOW, SHOW
+    if params_dict is not None and file_name is not None:
+        criteria_table = create_criteria_table(params_dict, disabled=True)
+
+        return criteria_table, True, file_name, SHOW, SHOW
     else:
-        return None, False, upload_default_message(), HIDE, HIDE
+        preview_msg = settings_preview_default_message()
+        upload_msg = upload_default_message()
+
+        return preview_msg, False, upload_msg, HIDE, HIDE
 
 
 @callback(
-    Output("params-store", "data"),
-    Output("params-filename-store", "data"),
+    Output("params-store", "data", allow_duplicate=True),
+    Output("params-filename-store", "data", allow_duplicate=True),
     Input("upload-params-data", "contents"),
     State("upload-params-data", "filename"),
+    prevent_initial_call="initial_duplicate",
 )
 def update_params_data(file_data, file_name):
     if file_data is not None:
-        params_dict, message = parse_params_file(file_data, file_name)
+        params_dict = parse_params_file(file_data, file_name)
 
         if params_dict is not None:
             return params_dict, file_name

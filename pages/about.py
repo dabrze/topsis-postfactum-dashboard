@@ -1,5 +1,4 @@
 import dash
-from dash import html
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
 
 dash.register_page(
@@ -21,7 +20,7 @@ layout = DangerouslySetInnerHTML(
     <p>Go to the main page, upload your data, set criteria weights and ranges, analyze
     the TOPSIS ranking, and generate postfactum suggestions. For a step by step tutorial
     take the <a href="javascript:tour();">Tour</a>.</p>
-    <h3>How to use the server?</h3>
+    <h3>How does it work?</h3>
     <p>Documentation in progress...</p>
     <h3>Credits and attributions</h3>
     <p><b><a href="https://plotly.com/dash/">Plotly Dash</a></b> is licensed under the <a href="http://opensource.org/licenses/MIT">MIT license</a>.</p>

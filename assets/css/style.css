@@ -173,6 +173,20 @@ ul.navbar-nav {
     padding-left: 1.5rem;
 }
 
+
+.error-page-content {
+    padding-top: 3.125rem;
+}
+
+.error-info {
+    margin-top: 1.25rem;
+    font-size: 1.5rem;
+}
+
+.error-action {
+    margin-top: 1.25rem;
+}
+
 .step-slogan {
     color: #F77A18;
     font-size: 2rem;
@@ -222,7 +236,6 @@ div.checkbox label {
 .bs-stepper .step-trigger {
     flex-wrap: nowrap;
     -ms-flex-wrap: nowrap;
-    cursor: default !important;
 }
 
 .bs-stepper .step-trigger:hover {
@@ -377,4 +390,42 @@ div.checkbox label {
 
 .optional {
     color: #999
+}
+
+.section-header {
+    font-weight: 700;
+    margin-top: 10px;
+}
+
+.section-header.first {
+    margin-top: 0;
+}
+
+.criteria-table {
+    margin-top: 10px;
+}
+
+.criteria-table thead {
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+}
+
+.criteria-table tbody {
+    border-bottom-width: 3px;
+}
+
+.criteria-table div[value="true"] .daq-toggleswitch--light__background {
+    background-color: #1ec283;
+}
+
+.criteria-table div[value="true"] .daq-toggleswitch--light__indicator--on {
+    background-color: #1ec283 !important;
+}
+
+.criteria-table div[value="false"] .daq-toggleswitch--light__background {
+    background-color: #e9534f;
+}
+
+.criteria-table div[value="false"] .daq-toggleswitch--light__indicator--on {
+    background-color: #e9534f !important;
 }

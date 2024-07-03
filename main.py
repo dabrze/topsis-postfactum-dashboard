@@ -2366,8 +2366,9 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    
     if args.port == 443:
-        ssl = "adhoc"
-    
-    app.run_server(debug=args.debug, host=args.ip, port=args.port, ssl_context=ssl)
+        app.run_server(
+            debug=args.debug, host=args.ip, port=args.port, ssl_context="adhoc"
+        )
+    else:
+        app.run_server(debug=args.debug, host=args.ip, port=args.port)
