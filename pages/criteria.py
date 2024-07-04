@@ -53,7 +53,7 @@ layout = stepper_layout(
                         className="btn btn-primary",
                         disabled=True,
                     ),
-                    href="/model",
+                    href="/dashboard",
                 ),
             ],
             className="stepper-form-controls",

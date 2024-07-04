@@ -1,6 +1,9 @@
 from argparse import ArgumentParser, BooleanOptionalAction
 from argparse import ArgumentDefaultsHelpFormatter
 
+SOLVER = "scip"
+DEBUG = False
+
 
 def parse_server_args():
     parser = ArgumentParser(
@@ -33,4 +36,8 @@ def parse_server_args():
         help="Turns on debugging option in run_server() method.",
     )
 
-    return parser.parse_args()
+    args = parser.parse_args()
+    SOLVER = args.solver
+    DEBUG = args.debug
+
+    return args

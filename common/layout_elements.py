@@ -211,11 +211,11 @@ def stepper_layout(
                                     [
                                         html.Span("4", className="bs-stepper-circle"),
                                         html.Span(
-                                            "Select model", className="bs-stepper-label"
+                                            "Analyze", className="bs-stepper-label"
                                         ),
                                     ],
                                     className="step-trigger",
-                                    href="/model",
+                                    href="/dashboard",
                                 ),
                                 className=f"step {step4_state}",
                             ),

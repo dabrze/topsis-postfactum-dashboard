@@ -31,7 +31,7 @@ layout = stepper_layout(
                 </a>
                 </div>
             <div class="col-md-6 task-panel"">
-                <a href="/playground" style="display: block">
+                <a href="/dashboard?dataset=playground" style="display: block">
                     <i class="fa-regular fa-circle-play task-select-img"></i>
                     <h3 class="task-select-header">Use example</h3>
                     <p class="stepper-description-box">If you don't have a dataset at hand, you can test out the server 

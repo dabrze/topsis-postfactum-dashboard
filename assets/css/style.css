@@ -367,7 +367,6 @@ div.checkbox label {
     font-size: 3rem;
     color: #1ec283;
     font-weight: bold;
-    /* #1ec283; */
 }
 
 .card-header {
@@ -428,4 +427,58 @@ div.checkbox label {
 
 .criteria-table div[value="false"] .daq-toggleswitch--light__indicator--on {
     background-color: #e9534f !important;
+}
+
+.dashboard-tabs {
+    padding-right: 0;
+}
+
+.dashboard-tabs .dashboard-tab-label {
+    font-size: 1.2rem;
+    padding: 1rem;
+    color: #373737;
+}
+
+.dashboard-tabs .dashboard-tab-label.active {
+    font-weight: 600;
+}
+
+.dashboard-tabs .dashboard-tab-label:hover {
+    color: #007bff;
+}
+
+.dashboard-tabs .dashboard-tab-label.active:hover {
+    color: inherit;
+}
+
+.tab-content {
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    padding: 20px;
+    min-height: 500px;
+}
+
+.nav-tabs {
+    margin-bottom: 0;
+}
+
+.ranking-tab::before,
+.pad-tab::before,
+.settings-tab::before {
+    font-family: "Font Awesome 6 Free";
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+
+.ranking-tab::before {
+    content: "\e561";
+}
+
+.pad-tab::before {
+    content: "\e4f3";
+}
+
+.settings-tab::before {
+    content: "\f013";
 }

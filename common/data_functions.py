@@ -2,7 +2,6 @@ import base64
 import json
 import io
 import pandas as pd
-import numpy as np
 import csv
 
 
@@ -77,3 +76,39 @@ def create_default_params_dict(df):
             }
 
     return params_dict
+
+
+def extract_settings_from_dict(params_dict, data_df):
+    criteria = []
+    settings = []
+
+    for k, v in params_dict.items():
+        criteria.append(k)
+        settings.append(pd.DataFrame.from_dict({c: [s] for c, s in v.items()}))
+
+    params_df = pd.concat(settings)
+    params_df.index = pd.Index(criteria)
+    params_df.index.name = "criterion"
+
+    # make sure the order of criteria is the same as in the data
+    params_df = params_df.loc[data_df.columns, :]
+
+    return params_df
+
+
+def prepare_wmsd_data(df, params_dict):
+    params_df = extract_settings_from_dict(params_dict, df)
+
+    # setting id columns as indices
+    ids = params_df[params_df["id_column"] == "true"].index.tolist()
+    params_df = params_df[params_df["id_column"] == "false"]
+    df = df.set_index(ids)
+
+    # preparing settings i a WMSD-suitable format
+    expert_ranges = [
+        [min, max] for min, max in zip(params_df.expert_min, params_df.expert_max)
+    ]
+    weights = params_df.weight.tolist()
+    objectives = params_df.objective.tolist()
+
+    return df, expert_ranges, weights, objectives
