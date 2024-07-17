@@ -1,0 +1,30 @@
+{
+    "Student": {
+        "id_column": "true",
+        "weight": 0,
+        "expert_min": 0,
+        "expert_max": 1,
+        "objective": "max"
+    },
+    "Math": {
+        "id_column": "false",
+        "weight": 3,
+        "expert_min": 0,
+        "expert_max": 100,
+        "objective": "max"
+    },
+    "Bio": {
+        "id_column": "false",
+        "weight": 2,
+        "expert_min": 1,
+        "expert_max": 6,
+        "objective": "max"
+    },
+    "Art": {
+        "id_column": "false",
+        "weight": 1,
+        "expert_min": 1,
+        "expert_max": 6,
+        "objective": "max"
+    }
+}

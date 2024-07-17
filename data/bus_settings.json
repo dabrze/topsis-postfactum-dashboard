@@ -1,0 +1,65 @@
+{
+    "BusId": {
+        "id_column": "true",
+        "weight": 0,
+        "expert_min": 0,
+        "expert_max": 1,
+        "objective": "max"
+    },
+    "MaxSpeed": {
+        "id_column": "false",
+        "weight": 1,
+        "expert_min": 60,
+        "expert_max": 90,
+        "objective": "max"
+    },
+    "ComprPressure": {
+        "id_column": "false",
+        "weight": 1,
+        "expert_min": 1,
+        "expert_max": 2,
+        "objective": "max"
+    },
+    "Blacking": {
+        "id_column": "false",
+        "weight": 1,
+        "expert_min": 26,
+        "expert_max": 95,
+        "objective": "min"
+    },
+    "Torque": {
+        "id_column": "false",
+        "weight": 1,
+        "expert_min": 400,
+        "expert_max": 486,
+        "objective": "max"
+    },
+    "SummerCons": {
+        "id_column": "false",
+        "weight": 1,
+        "expert_min": 20,
+        "expert_max": 27,
+        "objective": "min"
+    },
+    "WinterCons": {
+        "id_column": "false",
+        "weight": 1,
+        "expert_min": 23,
+        "expert_max": 33,
+        "objective": "min"
+    },
+    "OilCons": {
+        "id_column": "false",
+        "weight": 1,
+        "expert_min": 0,
+        "expert_max": 4,
+        "objective": "min"
+    },
+    "HorsePower": {
+        "id_column": "false",
+        "weight": 1,
+        "expert_min": 96,
+        "expert_max": 148,
+        "objective": "max"
+    }
+}

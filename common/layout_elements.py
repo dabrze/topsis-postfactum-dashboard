@@ -2,6 +2,7 @@ import dash
 import dash_bootstrap_components as dbc
 from dash_dangerously_set_inner_html import DangerouslySetInnerHTML
 from dash import html, dash_table, dcc
+from dash.dash_table.Format import Format, Scheme
 import dash_daq as daq
 
 EXTERNAL_STYLESHEETS = [
@@ -38,6 +39,11 @@ NO_STYLE = {}
 INVISIBLE = {"visibility": "hidden"}
 SHOW = {"display": "block"}
 HIDE = {"display": "none"}
+OVERLAY_STYLE = {
+    "visibility": "visible",
+    "opacity": 0.5,
+    "backgroundColor": "white",
+}
 
 
 def header(app):
@@ -244,10 +250,30 @@ def stepper_layout(
     )
 
 
-def styled_datatable(df):
+def styled_datatable(df, precision=3):
+    columns = []
+
+    for i, c in enumerate(df.columns):
+        column_type = df.dtypes[i]
+        if column_type == "float64":
+            columns.append(
+                dict(
+                    name=c,
+                    id=c,
+                    type="numeric",
+                    format=Format(precision=precision, scheme=Scheme.fixed),
+                )
+            )
+        elif column_type == "int64":
+            columns.append(
+                dict(name=c, id=c, type="numeric", format=Format().group(True))
+            )
+        else:
+            columns.append(dict(name=c, id=c))
+
     return dash_table.DataTable(
         data=df.to_dict("records"),
-        columns=[{"name": i, "id": i} for i in df.columns],
+        columns=columns,
         editable=False,
         sort_action="native",
         page_action="native",
@@ -454,3 +480,15 @@ def create_criteria_table(params_dict, disabled=False):
     )
 
     return html.Div(criteria_table, className="col-lg-12 block-row")
+
+
+def create_spinner(message):
+    return (
+        html.B(
+            [
+                message,
+                " ",
+                dbc.Spinner(color="#F77A18", size="sm"),
+            ]
+        ),
+    )
