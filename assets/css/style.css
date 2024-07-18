@@ -76,9 +76,11 @@ figure {
     margin: 2.5rem;
 }
 
-h4 {
-    margin-top: 1.25rem;
+h4.section-h4 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
     border-bottom: 1px solid #eee;
+    font-size: 1.5rem;
 }
 
 #page-content h2 {
@@ -481,4 +483,8 @@ div.checkbox label {
 
 .settings-tab::before {
     content: "\f013";
+}
+
+.btn-icon {
+    padding: 0.25rem 0.5rem 0.25rem 0
 }
