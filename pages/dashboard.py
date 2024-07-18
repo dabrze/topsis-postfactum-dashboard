@@ -20,6 +20,9 @@ from common.layout_elements import (
     styled_datatable,
 )
 
+DEFAULT_PRECISION = 3
+DEFAULT_COLORSCALE = "jet"
+
 dash.register_page(
     __name__,
     title="Postfactum Analysis Dashboard: Analyze",
@@ -39,7 +42,7 @@ def layout(dataset=None):
                         [
                             visualization_tab(),
                             analysis_tab(),
-                            settings_tab(),
+                            settings_tab(dataset),
                         ],
                         class_name="dashboard-tabs nav-fill",
                     ),
@@ -90,7 +93,7 @@ def analysis_tab():
     )
 
 
-def settings_tab():
+def settings_tab(dataset):
     return dbc.Tab(
         label="Settings and export",
         children=[
@@ -104,7 +107,7 @@ def settings_tab():
                             ),
                             dbc.Select(
                                 options=px.colors.named_colorscales(),
-                                value="jet",
+                                value=DEFAULT_COLORSCALE,
                                 id="colorscale-dropdown",
                                 className="form-control",
                             ),
@@ -113,10 +116,25 @@ def settings_tab():
                             dbc.Label("Choose the decimal precision used in tables:"),
                             dbc.Input(
                                 id="precision-input",
-                                value=3,
+                                value=DEFAULT_PRECISION,
                                 type="number",
                                 min=0,
                                 className="form-control",
+                            ),
+                            html.P(),
+                            html.A(
+                                html.Button(
+                                    [
+                                        html.I(
+                                            className="fa-solid fa-arrows-rotate btn-icon"
+                                        ),
+                                        "Apply changes",
+                                    ],
+                                    id="apply-changes-btn",
+                                    className="btn btn-primary",
+                                ),
+                                href="/dashboard"
+                                + (f"?dataset={dataset}" if dataset else ""),
                             ),
                         ],
                         className="col-lg-6",
@@ -172,12 +190,18 @@ def settings_tab():
 @callback(
     Output("ranking-fig", "figure"),
     Output("ranking-datatable", "children"),
+    Output("precision-input", "value"),
+    Output("colorscale-dropdown", "value"),
     Input("dashboard-query-param", "value"),
     Input("data-store", "data"),
-    State("data-filename-store", "data"),
+    Input("data-filename-store", "data"),
     Input("params-store", "data"),
+    Input("precision-store", "data"),
+    Input("colorscale-store", "data"),
 )
-def update_from_store(query_param, store_data, filename, params_dict):
+def update_from_store(
+    query_param, store_data, filename, params_dict, precision, colorscale
+):
     if query_param == "playground":
         df = pd.read_csv("data/students.csv")
         filename = "students.csv"
@@ -198,12 +222,17 @@ def update_from_store(query_param, store_data, filename, params_dict):
         df = df.sort_values("TOPSIS Score [R(v)]", ascending=False)
         df.insert(0, "Rank", range(1, df.shape[0] + 1))
 
-        fig = wmsd.plot(plot_name="")
-        table = styled_datatable(df)
+        fig = wmsd.plot(plot_name="", color=colorscale)
+        table = styled_datatable(df, precision=precision)
 
-        return fig, table
+        return fig, table, precision, colorscale
     else:
-        return None, data_preview_default_message()
+        return (
+            None,
+            data_preview_default_message(),
+            DEFAULT_PRECISION,
+            DEFAULT_COLORSCALE,
+        )
 
 
 @callback(
@@ -223,7 +252,7 @@ def download_params_dict(n_clicks, data_filename, params_dict):
     Output("colorscale-preview", "figure"),
     Input("colorscale-dropdown", "value"),
 )
-def change_colorscale(scale):
+def change_colorscale_preview(scale):
     trace = go.Heatmap(z=np.linspace(0, 1, 1000).reshape(1, -1), showscale=False)
 
     layout = go.Layout(
@@ -236,3 +265,18 @@ def change_colorscale(scale):
     trace["colorscale"] = scale
     fig = {"data": [trace], "layout": layout}
     return fig
+
+
+@callback(
+    Output("precision-store", "data"),
+    Output("colorscale-store", "data"),
+    Input("apply-changes-btn", "n_clicks"),
+    State("precision-input", "value"),
+    State("colorscale-dropdown", "value"),
+    prevent_initial_call=True,
+)
+def change_precision(n_clicks, precision, colorscale):
+    if n_clicks is not None and n_clicks > 0:
+        return precision, colorscale
+    else:
+        return dash.no_update, dash.no_update

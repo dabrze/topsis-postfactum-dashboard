@@ -25,6 +25,8 @@ app.layout = dbc.Container(
         dcc.Store(id="data-filename-store", storage_type="session"),
         dcc.Store(id="params-store", storage_type="session"),
         dcc.Store(id="params-filename-store", storage_type="session"),
+        dcc.Store(id="colorscale-store", storage_type="local"),
+        dcc.Store(id="precision-store", storage_type="local"),
         footer(),
     ],
     id="pad-layout",
