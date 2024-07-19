@@ -1,7 +1,7 @@
 import json
 import dash
 from dash import html, dcc, callback
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output, State, ALL, MATCH
 import dash_bootstrap_components as dbc
 import numpy as np
 import pandas as pd
@@ -84,12 +84,59 @@ def visualization_tab():
     )
 
 
+def postfactum_analysis_card(id):
+    return html.Div(
+        children=[
+            html.Div(
+                html.Div(
+                    [
+                        html.Div(
+                            f"Postfactum analysis #{id}", className="col text-start"
+                        ),
+                        html.Div(
+                            html.I(
+                                className="fa fa-times",
+                                id={"type": "postfactum-close-icon", "index": id},
+                            ),
+                            className="col text-end close-icon",
+                        ),
+                    ],
+                    className="row",
+                ),
+                className="card-header container-fluid",
+            ),
+            html.Div(
+                className="card-body",
+                children=[
+                    html.P(
+                        className="card-text",
+                        children="With supporting text below as a natural lead-in to additional content.",
+                    ),
+                ],
+            ),
+        ],
+        id={"type": "postfactum-analysis", "index": id},
+        className="card mb-3",
+    )
+
+
 def analysis_tab():
     return dbc.Tab(
         label="Postfactum analysis",
-        children=["TODO: Postfactum analysis"],
+        children=[
+            html.Button(
+                [
+                    html.I(className="fa-solid fa-plus"),
+                    html.Br(),
+                    "Add postfactum analysis",
+                ],
+                className="btn btn-outline-primary btn-lg text-center w-100 mt-3",
+                id="add-postfactum-analysis-btn",
+            ),
+        ],
         tab_class_name="dashboard-tab",
         label_class_name="dashboard-tab-label pad-tab",
+        id="postfactum-analysis-tab",
     )
 
 
@@ -280,3 +327,32 @@ def change_precision(n_clicks, precision, colorscale):
         return precision, colorscale
     else:
         return dash.no_update, dash.no_update
+
+
+@callback(
+    Output("postfactum-analysis-tab", "children"),
+    Input("add-postfactum-analysis-btn", "n_clicks"),
+    State("postfactum-analysis-tab", "children"),
+    prevent_initial_call=True,
+)
+def add_postfactum_analysis_card(n_clicks, current_analyses):
+    if n_clicks is not None and n_clicks > 0:
+        new_card = postfactum_analysis_card(n_clicks)
+        current_analyses.insert(-1, new_card)
+
+        return current_analyses
+    else:
+        dash.no_update
+
+
+@callback(
+    Output({"type": "postfactum-analysis", "index": MATCH}, "children"),
+    Output({"type": "postfactum-analysis", "index": MATCH}, "style"),
+    Input({"type": "postfactum-close-icon", "index": MATCH}, "n_clicks"),
+    prevent_initial_call=True,
+)
+def remove_postfactum_analysis_card(n_clicks):
+    if n_clicks is not None:
+        return None, dict(display="none", margin=0)
+    else:
+        dash.no_update, dash.no_update

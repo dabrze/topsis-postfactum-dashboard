@@ -488,3 +488,16 @@ div.checkbox label {
 .btn-icon {
     padding: 0.25rem 0.5rem 0.25rem 0
 }
+
+.btn.btn-outline-primary:not(:hover) {
+    background-color: transparent;
+    /* border-color: #007bff; */
+}
+
+.close-icon {
+    cursor: pointer;
+}
+
+.close-icon:hover {
+    color: #007bff
+}
