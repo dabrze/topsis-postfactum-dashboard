@@ -254,7 +254,7 @@ def styled_datatable(df, precision=3):
     columns = []
 
     for i, c in enumerate(df.columns):
-        column_type = df.dtypes[i]
+        column_type = df.dtypes.iat[i]
         if column_type == "float64":
             columns.append(
                 dict(

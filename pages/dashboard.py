@@ -249,9 +249,13 @@ def settings_tab(dataset):
 def update_from_store(
     query_param, store_data, filename, params_dict, precision, colorscale
 ):
+    if precision is None:
+        precision = DEFAULT_PRECISION
+    if colorscale is None:
+        colorscale = DEFAULT_COLORSCALE
+
     if query_param == "playground":
         df = pd.read_csv("data/students.csv")
-        filename = "students.csv"
 
         with open("data/students_settings.json") as f:
             params_dict = json.load(f)
