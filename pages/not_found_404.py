@@ -7,7 +7,9 @@ layout = html.Div(
     className="error-page-content text-center",
     children=[
         html.Img(
-            className="error-img", src=dash.get_asset_url("img/pad_404.svg"), alt="404"
+            className="error-img col-md-6",
+            src=dash.get_asset_url("img/pad_404.png"),
+            alt="404",
         ),
         html.Div(
             className="error-info",

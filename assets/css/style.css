@@ -461,6 +461,14 @@ div.checkbox label {
     min-height: 500px;
 }
 
+.postfactum-steps .tab-content {
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    padding: 20px;
+    min-height: 250px;
+}
+
 .nav-tabs {
     margin-bottom: 0;
 }

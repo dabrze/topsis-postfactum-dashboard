@@ -36,7 +36,7 @@ layout = stepper_layout(
                     <h3 class="task-select-header">Use example</h3>
                     <p class="stepper-description-box">If you don't have a dataset at hand, you can test out the server 
                     using an <b>example dataset</b>. You will perform visualizations and postfactum analyses 
-                    without having to submit your own data.<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    without having to submit your own data.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>

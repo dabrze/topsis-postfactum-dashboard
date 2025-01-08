@@ -84,7 +84,7 @@ def visualization_tab():
     )
 
 
-def postfactum_analysis_card(id):
+def postfactum_analysis_card(id, df, precision, colorscale):
     return html.Div(
         children=[
             html.Div(
@@ -106,18 +106,65 @@ def postfactum_analysis_card(id):
                 className="card-header container-fluid",
             ),
             html.Div(
-                className="card-body",
-                children=[
-                    html.P(
-                        className="card-text",
-                        children="With supporting text below as a natural lead-in to additional content.",
-                    ),
-                ],
+                dbc.Tabs(
+                    [
+                        dbc.Tab(
+                            postfactum_target_tab(id, df, precision),
+                            label="Analysis target",
+                        ),
+                        dbc.Tab(postfactum_method_tab(id), label="Method and options"),
+                        dbc.Tab(postfactum_results_tab(id), label="Results"),
+                    ]
+                ),
+                className="card-body postfactum-steps",
             ),
         ],
         id={"type": "postfactum-analysis", "index": id},
         className="card mb-3",
     )
+
+
+def postfactum_target_tab(id, df, precision):
+    return [
+        dbc.Row(
+            html.P(
+                [
+                    "Choose the ",
+                    html.B("source"),
+                    " alternative you want to change and the ",
+                    html.B("target"),
+                    " alternative you aim to supersede. We will find ways to change the source alternative to "
+                    "be as good or slightly better than the target alternative (according to TOPSIS).",
+                ]
+            )
+        ),
+        dbc.Row(
+            [
+                html.H4("Source alternative", className="col-md-6"),
+                html.H4("Target alternative", className="col-md-6"),
+            ]
+        ),
+        dbc.Row(
+            [
+                html.Div(
+                    styled_datatable(df, precision, row_selectable="single"),
+                    className="col-md-6",
+                ),
+                html.Div(
+                    styled_datatable(df, precision, row_selectable="single"),
+                    className="col-md-6",
+                ),
+            ]
+        ),
+    ]
+
+
+def postfactum_method_tab(id):
+    return html.Div("method")
+
+
+def postfactum_results_tab(id):
+    return html.Div("results")
 
 
 def analysis_tab():
@@ -234,20 +281,8 @@ def settings_tab(dataset):
     )
 
 
-@callback(
-    Output("ranking-fig", "figure"),
-    Output("ranking-datatable", "children"),
-    Output("precision-input", "value"),
-    Output("colorscale-dropdown", "value"),
-    Input("dashboard-query-param", "value"),
-    Input("data-store", "data"),
-    Input("data-filename-store", "data"),
-    Input("params-store", "data"),
-    Input("precision-store", "data"),
-    Input("colorscale-store", "data"),
-)
-def update_from_store(
-    query_param, store_data, filename, params_dict, precision, colorscale
+def extract_data_from_store(
+    query_param, store_data, params_dict, precision, colorscale, plot=False
 ):
     if precision is None:
         precision = DEFAULT_PRECISION
@@ -273,7 +308,34 @@ def update_from_store(
         df = df.sort_values("TOPSIS Score [R(v)]", ascending=False)
         df.insert(0, "Rank", range(1, df.shape[0] + 1))
 
-        fig = wmsd.plot(plot_name="", color=colorscale)
+        if plot is True:
+            fig = wmsd.plot(plot_name="", color=colorscale)
+        else:
+            fig = None
+
+    return df, precision, colorscale, params_dict, fig
+
+
+@callback(
+    Output("ranking-fig", "figure"),
+    Output("ranking-datatable", "children"),
+    Output("precision-input", "value"),
+    Output("colorscale-dropdown", "value"),
+    Input("dashboard-query-param", "value"),
+    Input("data-store", "data"),
+    Input("data-filename-store", "data"),
+    Input("params-store", "data"),
+    Input("precision-store", "data"),
+    Input("colorscale-store", "data"),
+)
+def update_from_store(
+    query_param, store_data, filename, params_dict, precision, colorscale
+):
+    df, precision, colorscale, params_dict, fig = extract_data_from_store(
+        query_param, store_data, params_dict, precision, colorscale, plot=True
+    )
+
+    if df is not None:
         table = styled_datatable(df, precision=precision)
 
         return fig, table, precision, colorscale
@@ -337,11 +399,28 @@ def change_precision(n_clicks, precision, colorscale):
     Output("postfactum-analysis-tab", "children"),
     Input("add-postfactum-analysis-btn", "n_clicks"),
     State("postfactum-analysis-tab", "children"),
+    State("data-store", "data"),
+    State("precision-store", "data"),
+    State("colorscale-store", "data"),
+    State("dashboard-query-param", "value"),
+    State("params-store", "data"),
     prevent_initial_call=True,
 )
-def add_postfactum_analysis_card(n_clicks, current_analyses):
+def add_postfactum_analysis_card(
+    n_clicks,
+    current_analyses,
+    store_data,
+    precision,
+    colorscale,
+    query_param,
+    params_dict,
+):
     if n_clicks is not None and n_clicks > 0:
-        new_card = postfactum_analysis_card(n_clicks)
+        df, precision, colorscale, params_dict, fig = extract_data_from_store(
+            query_param, store_data, params_dict, precision, colorscale, plot=True
+        )
+
+        new_card = postfactum_analysis_card(n_clicks, df, precision, colorscale)
         current_analyses.insert(-1, new_card)
 
         return current_analyses
