@@ -45,19 +45,17 @@ layout = stepper_layout(
                     ),
                     href="/upload",
                 ),
-                html.A(
-                    html.Button(
-                        "Next",
-                        id="criteria-submit-btn",
-                        className="btn btn-primary",
-                        disabled=True,
-                    ),
-                    href="/dashboard",
+                html.Button(
+                    "Next",
+                    id="criteria-submit-btn",
+                    className="btn btn-primary",
+                    disabled=True,
                 ),
             ],
             className="stepper-form-controls",
         ),
         dcc.Store(id="temp-params-store", storage_type="memory"),
+        dcc.Location(id="criteria-redirect", refresh=True),
     ],
 )
 
@@ -132,6 +130,7 @@ def update_params_dict(criteria, id_column, weight, expert_min, expert_max, obje
 @callback(
     Output("params-store", "data", allow_duplicate=True),
     Output("params-filename-store", "data", allow_duplicate=True),
+    Output("criteria-redirect", "pathname"),
     Input("criteria-submit-btn", "n_clicks"),
     State("temp-params-store", "data"),
     State("data-filename-store", "data"),
@@ -139,7 +138,7 @@ def update_params_dict(criteria, id_column, weight, expert_min, expert_max, obje
 )
 def submit_criteria(n, params_dict, data_filename):
     if n is None:
-        return no_update
+        return no_update, no_update, no_update
     else:
         json_filename = data_filename.split(".")[0] + "_edited_settings.json"
-        return params_dict, json_filename
+        return params_dict, json_filename, "/dashboard"

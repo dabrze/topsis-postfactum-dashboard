@@ -295,6 +295,9 @@ def settings_tab(dataset):
 def extract_data_from_store(
     query_param, store_data, params_dict, precision, colorscale, plot=False
 ):
+    df = None
+    fig = None
+    
     if precision is None:
         precision = DEFAULT_PRECISION
     if colorscale is None:
@@ -308,7 +311,7 @@ def extract_data_from_store(
     elif store_data is not None:
         df = pd.DataFrame.from_dict(store_data)
 
-    if df is not None:
+    if df is not None and params_dict is not None:
         wmsd_df, expert_ranges, weights, objectives = prepare_wmsd_data(df, params_dict)
         wmsd = wmsdt.WMSDTransformer(wmsdt.RTOPSIS, server_setup.SOLVER)
         wmsd_df = wmsd.fit_transform(wmsd_df, weights, objectives, expert_ranges)
