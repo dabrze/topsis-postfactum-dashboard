@@ -242,7 +242,7 @@ def stepper_layout(
     )
 
 
-def styled_datatable(df, precision=3, row_selectable=False):
+def styled_datatable(df, precision=3, row_selectable=False, id=None):
     columns = []
 
     for i, c in enumerate(df.columns):
@@ -263,24 +263,25 @@ def styled_datatable(df, precision=3, row_selectable=False):
         else:
             columns.append(dict(name=c, id=c))
 
-    # Add id only for the main ranking table
-    # We pass row_selectable="single" for main table, False for other tables
-    datatable_id = "ranking-table" if row_selectable == "single" else None
-
-    return dash_table.DataTable(
-        id=datatable_id,
-        data=df.to_dict("records"),
-        columns=columns,
-        editable=False,
-        row_selectable=row_selectable,
-        sort_action="native",
-        page_action="native",
-        page_size=10,
-        style_as_list_view=True,
-        style_cell={"padding": "5px"},
-        style_header={"backgroundColor": "white", "fontWeight": "bold"},
-        style_table={"overflowX": "auto"},
-    )
+    # Build the DataTable kwargs, only including id if it's provided
+    datatable_kwargs = {
+        "data": df.to_dict("records"),
+        "columns": columns,
+        "editable": False,
+        "row_selectable": row_selectable,
+        "sort_action": "native",
+        "page_action": "native",
+        "page_size": 10,
+        "style_as_list_view": True,
+        "style_cell": {"padding": "5px"},
+        "style_header": {"backgroundColor": "white", "fontWeight": "bold"},
+        "style_table": {"overflowX": "auto"},
+    }
+    
+    if id is not None:
+        datatable_kwargs["id"] = id
+    
+    return dash_table.DataTable(**datatable_kwargs)
 
 
 def upload_default_message():

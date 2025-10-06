@@ -356,7 +356,9 @@ def update_from_store(
     )
 
     if df is not None:
-        table = styled_datatable(df, precision=precision, row_selectable="single")
+        table = styled_datatable(
+            df, precision=precision, row_selectable="single", id="ranking-table"
+        )
         # Store the dataframe for use in highlighting callback
         wmsd_data = df[["WM", "WSD", "TOPSIS Score [R(v)]"]].to_dict("records")
 
