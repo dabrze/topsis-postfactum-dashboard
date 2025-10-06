@@ -263,7 +263,12 @@ def styled_datatable(df, precision=3, row_selectable=False):
         else:
             columns.append(dict(name=c, id=c))
 
+    # Add id only for the main ranking table
+    # We pass row_selectable="single" for main table, False for other tables
+    datatable_id = "ranking-table" if row_selectable == "single" else None
+    
     return dash_table.DataTable(
+        id=datatable_id,
         data=df.to_dict("records"),
         columns=columns,
         editable=False,

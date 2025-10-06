@@ -47,6 +47,8 @@ def layout(dataset=None):
                         class_name="dashboard-tabs nav-fill",
                     ),
                     dbc.Input(id="dashboard-query-param", type="hidden", value=dataset),
+                    dcc.Store(id="wmsd-data-store", storage_type="memory"),
+                    dcc.Store(id="highlight-color-store", storage_type="local"),
                 ],
                 className="col-lg-12",
             ),
@@ -216,6 +218,15 @@ def settings_tab(dataset):
                                 className="form-control",
                             ),
                             html.P(),
+                            dbc.Label("Choose the highlight circle outline color:"),
+                            dbc.Input(
+                                id="highlight-color-input",
+                                value="#FFFFFF",
+                                type="color",
+                                className="form-control",
+                                style={"width": "100px", "height": "40px"},
+                            ),
+                            html.P(),
                             html.A(
                                 html.Button(
                                     [
@@ -321,30 +332,41 @@ def extract_data_from_store(
     Output("ranking-datatable", "children"),
     Output("precision-input", "value"),
     Output("colorscale-dropdown", "value"),
+    Output("wmsd-data-store", "data"),
+    Output("highlight-color-input", "value"),
     Input("dashboard-query-param", "value"),
     Input("data-store", "data"),
     Input("data-filename-store", "data"),
     Input("params-store", "data"),
     Input("precision-store", "data"),
     Input("colorscale-store", "data"),
+    Input("highlight-color-store", "data"),
 )
 def update_from_store(
-    query_param, store_data, filename, params_dict, precision, colorscale
+    query_param, store_data, filename, params_dict, precision, colorscale, highlight_color
 ):
     df, precision, colorscale, params_dict, fig = extract_data_from_store(
         query_param, store_data, params_dict, precision, colorscale, plot=True
     )
 
     if df is not None:
-        table = styled_datatable(df, precision=precision)
+        table = styled_datatable(df, precision=precision, row_selectable="single")
+        # Store the dataframe for use in highlighting callback
+        wmsd_data = df[["WM", "WSD", "TOPSIS Score [R(v)]"]].to_dict("records")
+        
+        # Set default highlight color if not set
+        if highlight_color is None:
+            highlight_color = "#FFFFFF"
 
-        return fig, table, precision, colorscale
+        return fig, table, precision, colorscale, wmsd_data, highlight_color
     else:
         return (
             None,
             data_preview_default_message(),
             DEFAULT_PRECISION,
             DEFAULT_COLORSCALE,
+            None,
+            "#FFFFFF",
         )
 
 
@@ -383,16 +405,18 @@ def change_colorscale_preview(scale):
 @callback(
     Output("precision-store", "data"),
     Output("colorscale-store", "data"),
+    Output("highlight-color-store", "data"),
     Input("apply-changes-btn", "n_clicks"),
     State("precision-input", "value"),
     State("colorscale-dropdown", "value"),
+    State("highlight-color-input", "value"),
     prevent_initial_call=True,
 )
-def change_precision(n_clicks, precision, colorscale):
+def change_precision(n_clicks, precision, colorscale, highlight_color):
     if n_clicks is not None and n_clicks > 0:
-        return precision, colorscale
+        return precision, colorscale, highlight_color
     else:
-        return dash.no_update, dash.no_update
+        return dash.no_update, dash.no_update, dash.no_update
 
 
 @callback(
@@ -439,3 +463,58 @@ def remove_postfactum_analysis_card(n_clicks):
         return None, dict(display="none", margin=0)
     else:
         dash.no_update, dash.no_update
+
+
+@callback(
+    Output("ranking-fig", "figure", allow_duplicate=True),
+    Input("ranking-table", "selected_rows"),
+    State("ranking-fig", "figure"),
+    State("wmsd-data-store", "data"),
+    State("highlight-color-store", "data"),
+    prevent_initial_call=True,
+)
+def highlight_selected_point(selected_rows, current_fig, wmsd_data, highlight_color):
+    """Highlight the selected row's point in the WMSD visualization."""
+    if current_fig is None or wmsd_data is None:
+        return dash.no_update
+    
+    # Use default color if not set
+    if highlight_color is None:
+        highlight_color = "#FFFFFF"
+    
+    # Remove any existing highlight traces
+    fig_data = [trace for trace in current_fig["data"] if trace.get("name") != "Selected"]
+    
+    # If a row is selected, add a highlight
+    if selected_rows and len(selected_rows) > 0:
+        selected_idx = selected_rows[0]
+        
+        # Get the coordinates of the selected point
+        selected_point = wmsd_data[selected_idx]
+        wm = selected_point["WM"]
+        wsd = selected_point["WSD"]
+        
+        # Create a scatter trace for the highlight (circle outline with user-selected color)
+        highlight_trace = {
+            "type": "scatter",
+            "x": [wm],
+            "y": [wsd],
+            "mode": "markers",
+            "name": "Selected",
+            "marker": {
+                "size": 20,
+                "color": "rgba(255, 255, 255, 0)",  # Transparent fill
+                "line": {
+                    "color": highlight_color,
+                    "width": 3
+                }
+            },
+            "showlegend": False,
+            "hoverinfo": "skip",
+        }
+        fig_data.append(highlight_trace)
+    
+    # Update the figure
+    current_fig["data"] = fig_data
+    
+    return current_fig

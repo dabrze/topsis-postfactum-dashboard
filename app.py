@@ -15,6 +15,7 @@ app = dash.Dash(
     external_stylesheets=EXTERNAL_STYLESHEETS,
     external_scripts=EXTERNAL_SCRIPTS,
     use_pages=True,
+    suppress_callback_exceptions=True,
 )
 
 app.layout = dbc.Container(
