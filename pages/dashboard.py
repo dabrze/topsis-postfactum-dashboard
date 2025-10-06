@@ -297,7 +297,7 @@ def extract_data_from_store(
 ):
     df = None
     fig = None
-    
+
     if precision is None:
         precision = DEFAULT_PRECISION
     if colorscale is None:
@@ -389,7 +389,13 @@ def update_from_store(
     prevent_initial_call=True,
 )
 def download_params_dict(n_clicks, data_filename, params_dict):
-    json_filename = data_filename.split(".")[0] + "_settings.json"
+    if data_filename is None:
+        if params_dict is None:
+            with open("data/students_settings.json") as f:
+                params_dict = json.load(f)
+        json_filename = "playground_settings.json"
+    else:
+        json_filename = data_filename.split(".")[0] + "_settings.json"
 
     return dict(content=json.dumps(params_dict, indent=4), filename=json_filename)
 

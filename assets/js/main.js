@@ -70,7 +70,7 @@ function updateStepperLinks() {
         if (step4) {
             const step4Link = step4.querySelector('.step-trigger');
             if (step4Link) {
-                if (!hasParams) {
+                if (!hasParams || !hasData) {
                     step4Link.onclick = function (e) { e.preventDefault(); return false; };
                     step4Link.style.cursor = 'not-allowed';
                     step4Link.style.opacity = '0.5';
