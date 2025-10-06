@@ -1,7 +1,8 @@
 import pandas as pd
 import dash
-from dash import html, no_update, callback
+from dash import html, no_update, callback, dcc
 from dash.dependencies import Input, Output, State
+import dash_bootstrap_components as dbc
 
 from common.layout_elements import (
     HIDE,
@@ -99,6 +100,31 @@ layout = stepper_layout(
             ],
             className="stepper-form-controls",
         ),
+        # Store components to trigger extension error detection from JavaScript
+        dcc.Store(id="csv-extension-error-store"),
+        dcc.Store(id="json-extension-error-store"),
+        dbc.Modal(
+            [
+                dbc.ModalHeader(dbc.ModalTitle("File Upload Error")),
+                dbc.ModalBody(id="csv-error-message"),
+                dbc.ModalFooter(
+                    dbc.Button("Close", id="csv-error-close", className="ms-auto")
+                ),
+            ],
+            id="csv-error-modal",
+            is_open=False,
+        ),
+        dbc.Modal(
+            [
+                dbc.ModalHeader(dbc.ModalTitle("File Upload Error")),
+                dbc.ModalBody(id="json-error-message"),
+                dbc.ModalFooter(
+                    dbc.Button("Close", id="json-error-close", className="ms-auto")
+                ),
+            ],
+            id="json-error-modal",
+            is_open=False,
+        ),
     ],
 )
 
@@ -129,19 +155,32 @@ def update_csv_store(store_data, file_name):
 @callback(
     Output("data-store", "data"),
     Output("data-filename-store", "data"),
+    Output("csv-error-modal", "is_open"),
+    Output("csv-error-message", "children"),
     Input("upload-csv-data", "contents"),
     State("upload-csv-data", "filename"),
 )
 def update_csv_data(file_data, file_name):
     if file_data is not None:
-        df = parse_data_file(file_data, file_name)
+        try:
+            df = parse_data_file(file_data, file_name)
 
-        if df is not None:
-            return df.to_dict("records"), file_name
-        else:
-            return None, None
+            if df is not None:
+                return df.to_dict("records"), file_name, False, ""
+            else:
+                return (
+                    None,
+                    None,
+                    True,
+                    "Unable to parse the file. Please check the file format.",
+                )
+        except Exception as e:
+            error_message = str(e)
+            if "File error:" in error_message:
+                error_message = error_message.replace("File error: ", "")
+            return None, None, True, f"Error reading file: {error_message}"
     else:
-        return None, None
+        return None, None, False, ""
 
 
 @callback(
@@ -179,18 +218,33 @@ def update_params_store(params_dict, file_name):
 @callback(
     Output("params-store", "data", allow_duplicate=True),
     Output("params-filename-store", "data", allow_duplicate=True),
+    Output("json-error-modal", "is_open"),
+    Output("json-error-message", "children"),
     Input("upload-params-data", "contents"),
     State("upload-params-data", "filename"),
     prevent_initial_call="initial_duplicate",
 )
 def update_params_data(file_data, file_name):
     if file_data is not None:
-        params_dict = parse_params_file(file_data, file_name)
+        try:
+            params_dict = parse_params_file(file_data, file_name)
 
-        if params_dict is not None:
-            return params_dict, file_name
+            if params_dict is not None:
+                return params_dict, file_name, False, ""
+            else:
+                return (
+                    None,
+                    None,
+                    True,
+                    "Unable to parse the JSON file. Please check the file format.",
+                )
+        except Exception as e:
+            error_message = str(e)
+            if "File error:" in error_message:
+                error_message = error_message.replace("File error: ", "")
+            return None, None, True, f"Error reading file: {error_message}"
 
-    return None, None
+    return None, None, False, ""
 
 
 @callback(
@@ -202,3 +256,51 @@ def remove_params_file(n):
         return no_update
     else:
         return None
+
+
+@callback(
+    Output("csv-error-modal", "is_open", allow_duplicate=True),
+    Input("csv-error-close", "n_clicks"),
+    State("csv-error-modal", "is_open"),
+    prevent_initial_call=True,
+)
+def close_csv_error_modal(n, is_open):
+    if n:
+        return False
+    return is_open
+
+
+@callback(
+    Output("json-error-modal", "is_open", allow_duplicate=True),
+    Input("json-error-close", "n_clicks"),
+    State("json-error-modal", "is_open"),
+    prevent_initial_call=True,
+)
+def close_json_error_modal(n, is_open):
+    if n:
+        return False
+    return is_open
+
+
+@callback(
+    Output("csv-error-modal", "is_open", allow_duplicate=True),
+    Output("csv-error-message", "children", allow_duplicate=True),
+    Input("csv-extension-error-store", "data"),
+    prevent_initial_call=True,
+)
+def show_csv_extension_error(error_data):
+    if error_data and "error" in error_data:
+        return True, error_data["error"]
+    return no_update, no_update
+
+
+@callback(
+    Output("json-error-modal", "is_open", allow_duplicate=True),
+    Output("json-error-message", "children", allow_duplicate=True),
+    Input("json-extension-error-store", "data"),
+    prevent_initial_call=True,
+)
+def show_json_extension_error(error_data):
+    if error_data and "error" in error_data:
+        return True, error_data["error"]
+    return no_update, no_update
