@@ -54,12 +54,12 @@ def header(app):
     <div class="logo-container">
         <div id="main-navbar-header" class="navbar-header">
             <h1 id="header-panel">
-                <a id="logo-anchor" href="/"><img id="main-logo" alt="Postfactum Analysis Dashboard logo" 
+                <a id="logo-anchor" href="/"><img id="main-logo" alt="Postfactum Analysis Dashboard logo"
                 src="{app.get_asset_url("img/pad_logo.svg")}"> Postfactum Analysis Dashboard</a>
             </h1>
         </div>
     </div>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" 
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
     aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
@@ -118,9 +118,9 @@ def footer():
                 <h4>Citing</h4>
                 <p>
                     Susmaga <i>et al.</i> (2024)
-                    Towards explainable TOPSIS: Visual insights into the effects of weights and aggregations 
+                    Towards explainable TOPSIS: Visual insights into the effects of weights and aggregations
                     on rankings. <i>Applied Soft Computing</i>, 153, 111279.
-                    <a target="_blank" rel="noopener" href="https://doi.org/10.1016/j.asoc.2024.111279" 
+                    <a target="_blank" rel="noopener" href="https://doi.org/10.1016/j.asoc.2024.111279"
                     onclick="gtag('event', 'follow', {'event_category': 'Actions'});">
                     <i class="fas fa-external-link-alt" title="Link to the CheckMyBlob publication"></i>
                     </a>
@@ -266,7 +266,7 @@ def styled_datatable(df, precision=3, row_selectable=False):
     # Add id only for the main ranking table
     # We pass row_selectable="single" for main table, False for other tables
     datatable_id = "ranking-table" if row_selectable == "single" else None
-    
+
     return dash_table.DataTable(
         id=datatable_id,
         data=df.to_dict("records"),

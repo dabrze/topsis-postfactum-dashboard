@@ -1,7 +1,7 @@
 import json
 import dash
 from dash import html, dcc, callback
-from dash.dependencies import Input, Output, State, ALL, MATCH
+from dash.dependencies import Input, Output, State, MATCH
 import dash_bootstrap_components as dbc
 import numpy as np
 import pandas as pd
@@ -343,7 +343,13 @@ def extract_data_from_store(
     Input("highlight-color-store", "data"),
 )
 def update_from_store(
-    query_param, store_data, filename, params_dict, precision, colorscale, highlight_color
+    query_param,
+    store_data,
+    filename,
+    params_dict,
+    precision,
+    colorscale,
+    highlight_color,
 ):
     df, precision, colorscale, params_dict, fig = extract_data_from_store(
         query_param, store_data, params_dict, precision, colorscale, plot=True
@@ -353,7 +359,7 @@ def update_from_store(
         table = styled_datatable(df, precision=precision, row_selectable="single")
         # Store the dataframe for use in highlighting callback
         wmsd_data = df[["WM", "WSD", "TOPSIS Score [R(v)]"]].to_dict("records")
-        
+
         # Set default highlight color if not set
         if highlight_color is None:
             highlight_color = "#FFFFFF"
@@ -477,23 +483,25 @@ def highlight_selected_point(selected_rows, current_fig, wmsd_data, highlight_co
     """Highlight the selected row's point in the WMSD visualization."""
     if current_fig is None or wmsd_data is None:
         return dash.no_update
-    
+
     # Use default color if not set
     if highlight_color is None:
         highlight_color = "#FFFFFF"
-    
+
     # Remove any existing highlight traces
-    fig_data = [trace for trace in current_fig["data"] if trace.get("name") != "Selected"]
-    
+    fig_data = [
+        trace for trace in current_fig["data"] if trace.get("name") != "Selected"
+    ]
+
     # If a row is selected, add a highlight
     if selected_rows and len(selected_rows) > 0:
         selected_idx = selected_rows[0]
-        
+
         # Get the coordinates of the selected point
         selected_point = wmsd_data[selected_idx]
         wm = selected_point["WM"]
         wsd = selected_point["WSD"]
-        
+
         # Create a scatter trace for the highlight (circle outline with user-selected color)
         highlight_trace = {
             "type": "scatter",
@@ -504,17 +512,14 @@ def highlight_selected_point(selected_rows, current_fig, wmsd_data, highlight_co
             "marker": {
                 "size": 20,
                 "color": "rgba(255, 255, 255, 0)",  # Transparent fill
-                "line": {
-                    "color": highlight_color,
-                    "width": 3
-                }
+                "line": {"color": highlight_color, "width": 3},
             },
             "showlegend": False,
             "hoverinfo": "skip",
         }
         fig_data.append(highlight_trace)
-    
+
     # Update the figure
     current_fig["data"] = fig_data
-    
+
     return current_fig

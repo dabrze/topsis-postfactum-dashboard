@@ -5,7 +5,6 @@ from dash.dependencies import Input, Output, State, MATCH, ALL
 
 from common.data_functions import (
     create_default_params_dict,
-    parse_params_file,
 )
 from common.layout_elements import (
     INVISIBLE,
