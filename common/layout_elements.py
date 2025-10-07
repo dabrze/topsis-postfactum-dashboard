@@ -276,11 +276,17 @@ def styled_datatable(df, precision=3, row_selectable=False, id=None):
         "style_cell": {"padding": "5px"},
         "style_header": {"backgroundColor": "white", "fontWeight": "bold"},
         "style_table": {"overflowX": "auto"},
+        "style_data_conditional": [
+            {
+                "if": {"row_index": "odd"},
+                "backgroundColor": "rgb(240, 240, 240)",
+            }
+        ],
     }
-    
+
     if id is not None:
         datatable_kwargs["id"] = id
-    
+
     return dash_table.DataTable(**datatable_kwargs)
 
 
