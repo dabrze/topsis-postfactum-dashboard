@@ -130,13 +130,21 @@ def supports_wmsd(method_key):
     return bool(get_aggregation_config(method_key)["wmsd"])
 
 
+def supports_exact_nlp(method_key):
+    return method_key in {"R", "U", "K", "C", "W"}
+
+
 def get_postfactum_methods(method_key):
+    methods = [
+        "improvement_single_feature",
+        "improvement_features",
+        "improvement_genetic",
+    ]
+    if supports_exact_nlp(method_key):
+        methods.insert(2, "improvement_non_linear_programming")
     if supports_wmsd(method_key):
-        methods = ["improvement_single_feature", "improvement_features", "improvement_genetic", "improvement_mean", "improvement_std"]
-        if method_key == "R":
-            methods.insert(3, "improvement_non_linear_programming")
-        return methods
-    return ["improvement_single_feature", "improvement_features", "improvement_genetic"]
+        methods.extend(["improvement_mean", "improvement_std"])
+    return methods
 
 
 def get_excluded_columns():
