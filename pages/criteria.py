@@ -54,6 +54,10 @@ layout = stepper_layout(
             ],
             className="stepper-form-controls",
         ),
+        html.Div(
+            id="criteria-validation-msg",
+            className="text-danger mt-2",
+        ),
         dcc.Store(id="temp-params-store", storage_type="memory"),
         dcc.Location(id="criteria-redirect", refresh=True),
     ],
@@ -125,6 +129,50 @@ def update_params_dict(criteria, id_column, weight, expert_min, expert_max, obje
         }
 
     return temp_params_dict
+
+
+@callback(
+    Output("criteria-submit-btn", "disabled", allow_duplicate=True),
+    Output("criteria-validation-msg", "children"),
+    Input("temp-params-store", "data"),
+    prevent_initial_call=True,
+)
+def validate_criteria(temp_params):
+    if not temp_params:
+        return True, ""
+
+    positive_weight = False
+    range_errors = []
+    for name, cfg in temp_params.items():
+        if (cfg.get("id_column") or "false") == "true":
+            continue
+        try:
+            w = float(cfg.get("weight") or 0)
+        except (TypeError, ValueError):
+            w = 0
+        if w > 0:
+            positive_weight = True
+        try:
+            lo = float(cfg.get("expert_min"))
+            hi = float(cfg.get("expert_max"))
+            if lo >= hi:
+                range_errors.append(name)
+        except (TypeError, ValueError):
+            range_errors.append(name)
+
+    messages = []
+    if not positive_weight:
+        messages.append(
+            "At least one non-ID criterion must have a positive weight."
+        )
+    if range_errors:
+        messages.append(
+            "Invalid expert range (min must be < max) for: "
+            + ", ".join(range_errors)
+        )
+
+    disabled = bool(messages)
+    return disabled, " ".join(messages)
 
 
 @callback(

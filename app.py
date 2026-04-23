@@ -1,5 +1,6 @@
 import dash
-from dash import html, dcc
+import diskcache
+from dash import html, dcc, DiskcacheManager
 import dash_bootstrap_components as dbc
 
 from common.layout_elements import (
@@ -10,12 +11,16 @@ from common.layout_elements import (
 )
 from common.server_setup import parse_server_args
 
+_cache = diskcache.Cache("./.dash-cache")
+background_callback_manager = DiskcacheManager(_cache)
+
 app = dash.Dash(
     __name__,
     external_stylesheets=EXTERNAL_STYLESHEETS,
     external_scripts=EXTERNAL_SCRIPTS,
     use_pages=True,
     suppress_callback_exceptions=True,
+    background_callback_manager=background_callback_manager,
 )
 
 app.layout = dbc.Container(
