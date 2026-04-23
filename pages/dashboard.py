@@ -83,6 +83,13 @@ AGGREGATION_OPTIONS = {
         "score_label": "WASPAS Score [W(v)]",
         "wmsd": False,
     },
+    "V": {
+        "label": "VIKOR",
+        "class": wmsdt.VIKOR,
+        "score_column": "V",
+        "score_label": "VIKOR Score [V(v)]",
+        "wmsd": False,
+    },
 }
 POSTFACTUM_METHODS = {
     "improvement_single_feature": {
@@ -131,7 +138,7 @@ def supports_wmsd(method_key):
 
 
 def supports_exact_nlp(method_key):
-    return method_key in {"R", "U", "K", "C", "W"}
+    return method_key in {"R", "U", "K", "C", "W", "V"}
 
 
 def get_postfactum_methods(method_key):

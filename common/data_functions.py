@@ -15,6 +15,7 @@ AGGREGATION_METHOD_LABELS = {
     "K": "ARAS",
     "C": "COPRAS",
     "W": "WASPAS",
+    "V": "VIKOR",
 }
 
 
