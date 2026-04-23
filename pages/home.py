@@ -25,7 +25,7 @@ layout = stepper_layout(
                     <i class="fa-solid fa-upload task-select-img"></i>
                     <h3 class="task-select-header">Upload data</h3>
                     <p class="stepper-description-box">We will analyze <b>your data</b> by uploading it to the server,
-                    setting the criteria weights, and running TOPSIS. Then you will be able to perform
+                    setting the criteria weights, choosing a ranking method, and running the analysis. Then you will be able to perform
                     postfactum analyses and discover how to change alternatives to reach given goals.</p>
                     <button type="button" class="btn btn-lg btn-outline-primary task-select-button">Upload</button>
                 </a>

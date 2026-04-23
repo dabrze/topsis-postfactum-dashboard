@@ -11,15 +11,15 @@ dash.register_page(
 layout = DangerouslySetInnerHTML(
     """
     <h2>About</h2>
-    <p>Postfactum Analysis Dashboard is a tool for post-factum analysis for the TOPSIS
-    multi-criteria ranking method. The dashboard lets users visualize TOPSIS rankings
+    <p>Postfactum Analysis Dashboard is a tool for post-factum analysis for MCDA
+    ranking methods. The dashboard lets users visualize TOPSIS-family rankings
     in WMSD-space and search for ways of improving the ranking positions of alternatives.
-    The server offers methods for post-factum analysis that work on single criteria or
-    the means/standard deviations of the alternative's criteria values.</p>
+    It also supports score-driven methods such as SAW, ARAS, COPRAS, and WASPAS
+    for direct, ordered, and evolutionary improvement searches.</p>
     <h3>How to use the server?</h3>
-    <p>Go to the main page, upload your data, set criteria weights and ranges, analyze
-    the TOPSIS ranking, and generate postfactum suggestions. For a step by step tutorial
-    take the <a href="javascript:tour();">Tour</a>.</p>
+    <p>Go to the main page, upload your data, set criteria weights and ranges, choose
+    the aggregation method, analyze the ranking, and generate postfactum suggestions. For a step by step tutorial
+    take the <a href="javascript:tour();">Tour</a>, which loads a sample dataset into the wizard and walks through the criteria step before opening the analysis page.</p>
     <h3>How does it work?</h3>
     <p>Documentation in progress...</p>
     <h3>Credits and attributions</h3>

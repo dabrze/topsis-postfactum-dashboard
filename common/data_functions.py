@@ -5,6 +5,35 @@ import pandas as pd
 import csv
 
 
+DEFAULT_AGGREGATION_METHOD = "R"
+AGGREGATION_METHOD_KEY = "_aggregation_method"
+AGGREGATION_METHOD_LABELS = {
+    "R": "TOPSIS",
+    "A": "ATOPSIS",
+    "I": "ITOPSIS",
+    "U": "SAW",
+    "K": "ARAS",
+    "C": "COPRAS",
+    "W": "WASPAS",
+}
+
+
+def get_criteria_params(params_dict):
+    return {
+        key: value
+        for key, value in (params_dict or {}).items()
+        if isinstance(value, dict) and "id_column" in value
+    }
+
+
+def get_aggregation_method(params_dict, default=DEFAULT_AGGREGATION_METHOD):
+    if isinstance(params_dict, dict):
+        method = params_dict.get(AGGREGATION_METHOD_KEY)
+        if isinstance(method, str) and method:
+            return method
+    return default
+
+
 def get_delimiter(csv_file_contents):
     sniffer = csv.Sniffer()
     csv_file_contents = csv_file_contents.decode("utf-8")
@@ -75,10 +104,12 @@ def create_default_params_dict(df):
                 "objective": "max",
             }
 
+    params_dict[AGGREGATION_METHOD_KEY] = DEFAULT_AGGREGATION_METHOD
     return params_dict
 
 
 def extract_settings_from_dict(params_dict, data_df):
+    params_dict = get_criteria_params(params_dict)
     criteria = []
     settings = []
 

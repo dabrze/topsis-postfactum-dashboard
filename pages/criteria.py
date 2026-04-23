@@ -1,10 +1,15 @@
 import pandas as pd
 import dash
+import dash_bootstrap_components as dbc
 from dash import html, dcc, no_update, callback
 from dash.dependencies import Input, Output, State, MATCH, ALL
 
 from common.data_functions import (
+    AGGREGATION_METHOD_KEY,
+    AGGREGATION_METHOD_LABELS,
+    DEFAULT_AGGREGATION_METHOD,
     create_default_params_dict,
+    get_aggregation_method,
 )
 from common.layout_elements import (
     INVISIBLE,
@@ -31,6 +36,30 @@ layout = stepper_layout(
                 className="col-lg-12 section-header first-header",
             ),
             className="row",
+        ),
+        html.Div(
+            [
+                html.Div(
+                    [
+                        dbc.Label("Ranking method", html_for="criteria-aggregation-method"),
+                        dbc.Select(
+                            id="criteria-aggregation-method",
+                            options=[
+                                {"label": label, "value": key}
+                                for key, label in AGGREGATION_METHOD_LABELS.items()
+                            ],
+                            value=DEFAULT_AGGREGATION_METHOD,
+                        ),
+                        html.Small(
+                            "Choose the aggregation method before moving to the analysis step.",
+                            className="text-muted",
+                        ),
+                    ],
+                    className="col-lg-12",
+                )
+            ],
+            className="row block-row",
+            id="criteria-method-section",
         ),
         html.Div(
             className="row block-row",
@@ -67,6 +96,7 @@ layout = stepper_layout(
 @callback(
     Output("criteria-edit-card", "children"),
     Output("criteria-submit-btn", "disabled"),
+    Output("criteria-aggregation-method", "value"),
     Input("data-store", "data"),
     State("data-filename-store", "data"),
     Input("params-store", "data"),
@@ -79,6 +109,7 @@ def update_params(data, data_filename, params):
                 className="col-lg-12 block-row",
             ),
             True,
+            DEFAULT_AGGREGATION_METHOD,
         )
     else:
         df = pd.DataFrame.from_dict(data)
@@ -89,8 +120,9 @@ def update_params(data, data_filename, params):
             params_dict = params
 
         criteria_table = create_criteria_table(params_dict)
+        aggregation_method = get_aggregation_method(params_dict)
 
-        return criteria_table, False
+        return criteria_table, False, aggregation_method
 
 
 @callback(
@@ -115,8 +147,9 @@ def check_id_switch(is_on):
     Input({"type": "expert_min", "index": ALL}, "value"),
     Input({"type": "expert_max", "index": ALL}, "value"),
     Input({"type": "objective", "index": ALL}, "value"),
+    Input("criteria-aggregation-method", "value"),
 )
-def update_params_dict(criteria, id_column, weight, expert_min, expert_max, objective):
+def update_params_dict(criteria, id_column, weight, expert_min, expert_max, objective, aggregation_method):
     temp_params_dict = dict()
 
     for i, criterion in enumerate(criteria):
@@ -128,6 +161,7 @@ def update_params_dict(criteria, id_column, weight, expert_min, expert_max, obje
             "objective": "max" if objective[i] else "min",
         }
 
+    temp_params_dict[AGGREGATION_METHOD_KEY] = aggregation_method or DEFAULT_AGGREGATION_METHOD
     return temp_params_dict
 
 
@@ -144,6 +178,8 @@ def validate_criteria(temp_params):
     positive_weight = False
     range_errors = []
     for name, cfg in temp_params.items():
+        if not isinstance(cfg, dict):
+            continue
         if (cfg.get("id_column") or "false") == "true":
             continue
         try:
@@ -178,6 +214,7 @@ def validate_criteria(temp_params):
 @callback(
     Output("params-store", "data", allow_duplicate=True),
     Output("params-filename-store", "data", allow_duplicate=True),
+    Output("aggregation-method-store", "data", allow_duplicate=True),
     Output("criteria-redirect", "pathname"),
     Input("criteria-submit-btn", "n_clicks"),
     State("temp-params-store", "data"),
@@ -186,7 +223,12 @@ def validate_criteria(temp_params):
 )
 def submit_criteria(n, params_dict, data_filename):
     if n is None:
-        return no_update, no_update, no_update
+        return no_update, no_update, no_update, no_update
     else:
         json_filename = data_filename.split(".")[0] + "_edited_settings.json"
-        return params_dict, json_filename, "/dashboard"
+        return (
+            params_dict,
+            json_filename,
+            get_aggregation_method(params_dict),
+            "/dashboard",
+        )

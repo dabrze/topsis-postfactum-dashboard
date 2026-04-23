@@ -12,7 +12,12 @@ from pandas.api.types import is_numeric_dtype
 import WMSDTransformer as wmsdt
 
 from common import server_setup
-from common.data_functions import prepare_wmsd_data
+from common.data_functions import (
+    AGGREGATION_METHOD_KEY,
+    DEFAULT_AGGREGATION_METHOD,
+    get_aggregation_method,
+    prepare_wmsd_data,
+)
 from common.layout_elements import (
     OVERLAY_STYLE,
     create_spinner,
@@ -24,6 +29,61 @@ from common.layout_elements import (
 DEFAULT_PRECISION = 3
 DEFAULT_COLORSCALE = "jet"
 DEFAULT_EPSILON = 1e-6
+DEFAULT_RANKING_BAR_COLOR = "#0077BB"
+DEFAULT_HIGHLIGHT_COLOR = "#EE3377"
+CONTRIBUTION_BEFORE_COLOR = "#BBBBBB"
+CONTRIBUTION_AFTER_COLOR = "#EE7733"
+AGGREGATION_OPTIONS = {
+    "R": {
+        "label": "TOPSIS",
+        "class": wmsdt.RTOPSIS,
+        "score_column": "R",
+        "score_label": "TOPSIS Score [R(v)]",
+        "wmsd": True,
+    },
+    "A": {
+        "label": "ATOPSIS",
+        "class": wmsdt.ATOPSIS,
+        "score_column": "A",
+        "score_label": "ATOPSIS Score [A(v)]",
+        "wmsd": True,
+    },
+    "I": {
+        "label": "ITOPSIS",
+        "class": wmsdt.ITOPSIS,
+        "score_column": "I",
+        "score_label": "ITOPSIS Score [I(v)]",
+        "wmsd": True,
+    },
+    "U": {
+        "label": "SAW",
+        "class": wmsdt.SAW,
+        "score_column": "U",
+        "score_label": "SAW Score [U(v)]",
+        "wmsd": False,
+    },
+    "K": {
+        "label": "ARAS",
+        "class": wmsdt.ARAS,
+        "score_column": "K",
+        "score_label": "ARAS Score [K(v)]",
+        "wmsd": False,
+    },
+    "C": {
+        "label": "COPRAS",
+        "class": wmsdt.COPRAS,
+        "score_column": "C",
+        "score_label": "COPRAS Score [C(v)]",
+        "wmsd": False,
+    },
+    "W": {
+        "label": "WASPAS",
+        "class": wmsdt.WASPAS,
+        "score_column": "W",
+        "score_label": "WASPAS Score [W(v)]",
+        "wmsd": False,
+    },
+}
 POSTFACTUM_METHODS = {
     "improvement_single_feature": {
         "label": "Direct method (single criterion)",
@@ -50,14 +110,42 @@ POSTFACTUM_METHODS = {
         "description": "Find minimal change in the weighted std; results are sampled inverse US-space solutions.",
     },
 }
-EXCLUDED_CRITERIA_COLUMNS = {
-    "Rank",
-    "WM",
-    "WSD",
-    "TOPSIS Score [R(v)]",
-}
 RESULT_DISPLAY_THRESHOLD = 1e-9
 DEFAULT_SOLUTIONS_TO_DISPLAY = 5
+
+
+def get_aggregation_config(method_key):
+    return AGGREGATION_OPTIONS.get(method_key, AGGREGATION_OPTIONS[DEFAULT_AGGREGATION_METHOD])
+
+
+def get_score_label(method_key):
+    return get_aggregation_config(method_key)["score_label"]
+
+
+def get_aggregation_display_name(method_key):
+    return get_aggregation_config(method_key)["label"]
+
+
+def supports_wmsd(method_key):
+    return bool(get_aggregation_config(method_key)["wmsd"])
+
+
+def get_postfactum_methods(method_key):
+    if supports_wmsd(method_key):
+        methods = ["improvement_single_feature", "improvement_features", "improvement_genetic", "improvement_mean", "improvement_std"]
+        if method_key == "R":
+            methods.insert(3, "improvement_non_linear_programming")
+        return methods
+    return ["improvement_single_feature", "improvement_features", "improvement_genetic"]
+
+
+def get_excluded_columns():
+    return {
+        "Rank",
+        "WM",
+        "WSD",
+        *(config["score_label"] for config in AGGREGATION_OPTIONS.values()),
+    }
 
 
 def get_criteria_columns(df):
@@ -67,8 +155,29 @@ def get_criteria_columns(df):
     return [
         col
         for col in df.columns
-        if col not in EXCLUDED_CRITERIA_COLUMNS and is_numeric_dtype(df[col])
+        if col not in get_excluded_columns() and is_numeric_dtype(df[col])
     ]
+
+
+def get_ranked_alternative_labels(df, params_dict):
+    if df is None or df.empty:
+        return []
+
+    id_columns = [
+        col
+        for col, cfg in (params_dict or {}).items()
+        if isinstance(cfg, dict)
+        and (cfg.get("id_column") or "false") == "true"
+        and col in df.columns
+    ]
+    if not id_columns:
+        return [str(idx) for idx in df.index.tolist()]
+
+    labels = []
+    for _, row in df.iterrows():
+        parts = [str(row[col]) for col in id_columns if pd.notna(row[col]) and str(row[col]) != ""]
+        labels.append(" / ".join(parts) if parts else "(Unnamed alternative)")
+    return labels
 
 
 def build_card_context(df, params_dict=None):
@@ -154,7 +263,7 @@ def extract_alternative_key_label(record, index_columns):
     return key, label
 
 
-def load_postfactum_runtime(query_param, store_data, params_dict):
+def load_postfactum_runtime(query_param, store_data, params_dict, agg_method_key=None):
     df = None
     params = params_dict
 
@@ -168,10 +277,14 @@ def load_postfactum_runtime(query_param, store_data, params_dict):
     if df is None or params is None:
         return None, None, None, None
 
+    agg_method_key = agg_method_key or get_aggregation_method(params)
+    agg_config = get_aggregation_config(agg_method_key)
+    score_label = agg_config["score_label"]
+    score_column = agg_config["score_column"]
     decision_df, expert_ranges, weights, objectives = prepare_wmsd_data(
         df.copy(), params
     )
-    transformer = wmsdt.WMSDTransformer(wmsdt.RTOPSIS, server_setup.SOLVER)
+    transformer = wmsdt.WMSDTransformer(agg_config["class"], server_setup.SOLVER)
     normalized_df = transformer.fit_transform(
         decision_df.copy(), weights, objectives, expert_ranges
     )
@@ -191,8 +304,8 @@ def load_postfactum_runtime(query_param, store_data, params_dict):
         ranked_df = ranked_df.set_index(id_columns)
     ranked_df.loc[:, "WM"] = normalized_df.loc[:, "Mean"].values
     ranked_df.loc[:, "WSD"] = normalized_df.loc[:, "Std"].values
-    ranked_df.loc[:, "TOPSIS Score [R(v)]"] = normalized_df.loc[:, "R"].values
-    ranked_df = ranked_df.sort_values("TOPSIS Score [R(v)]", ascending=False)
+    ranked_df.loc[:, score_label] = normalized_df.loc[:, score_column].values
+    ranked_df = ranked_df.sort_values(score_label, ascending=False)
     ranked_df.insert(0, "Rank", range(1, ranked_df.shape[0] + 1))
 
     return transformer, decision_df, ranked_df, normalized_df
@@ -249,7 +362,9 @@ def build_postfactum_results_layout(
     precision = int(precision)
 
     criteria_columns = decision_df.columns.tolist()
-    agg_label = "TOPSIS Score [R(v)]"
+    agg_label = get_score_label(str(transformer.agg_fn.letter))
+    agg_display_name = get_aggregation_display_name(str(transformer.agg_fn.letter))
+    use_wmsd_plots = supports_wmsd(str(transformer.agg_fn.letter))
     current_score = ranked_df.loc[source_key, agg_label]
     target_score = ranked_df.loc[target_key, agg_label]
 
@@ -265,8 +380,8 @@ def build_postfactum_results_layout(
     # Prime the WMSD background figure (cached on the transformer) so that
     # plot_improvement can overlay the trajectory arrow without rebuilding
     # the heatmap for every solution.
-    plot_background_ready = True
-    if getattr(transformer, "plot_background", None) is None:
+    plot_background_ready = use_wmsd_plots
+    if use_wmsd_plots and getattr(transformer, "plot_background", None) is None:
         try:
             transformer.plot(
                 plot_name="",
@@ -305,14 +420,18 @@ def build_postfactum_results_layout(
 
         summary_items = [
             html.Li(
-                f"Current R(v): {current_score:.{precision}f} → {new_score:.{precision}f}"
+                f"Current score: {current_score:.{precision}f} → {new_score:.{precision}f}"
             ),
-            html.Li(f"Target R(v): {target_score:.{precision}f} (rank {target_rank})"),
-            html.Li(
-                f"Weighted mean / std: {new_mean:.{precision}f} / {new_std:.{precision}f}"
-            ),
+            html.Li(f"Target score: {target_score:.{precision}f} (rank {target_rank})"),
             html.Li(f"Estimated new rank: {new_rank}"),
         ]
+        if use_wmsd_plots:
+            summary_items.insert(
+                2,
+                html.Li(
+                    f"Weighted mean / std: {new_mean:.{precision}f} / {new_std:.{precision}f}"
+                ),
+            )
 
         changes_table = pd.DataFrame(
             {
@@ -371,6 +490,54 @@ def build_postfactum_results_layout(
                         className="text-muted",
                     )
                 )
+        else:
+            original_transformed = transformer.transform(original_values.to_frame().T)
+            original_normalized = (
+                original_transformed.loc[:, criteria_columns].iloc[0].astype(float)
+            )
+            normalized_values = transformed_row.loc[:, criteria_columns].iloc[0].astype(float)
+            weights_array = np.asarray(transformer.weights, dtype=float)
+            before_contributions = original_normalized * weights_array
+            after_contributions = normalized_values * weights_array
+            contribution_fig = go.Figure(
+                data=[
+                    go.Bar(
+                        x=criteria_columns,
+                        y=before_contributions,
+                        name="Before",
+                        marker_color=CONTRIBUTION_BEFORE_COLOR,
+                    ),
+                    go.Bar(
+                        x=criteria_columns,
+                        y=after_contributions,
+                        name="After",
+                        marker_color=CONTRIBUTION_AFTER_COLOR,
+                    ),
+                ]
+            )
+            contribution_fig.update_layout(
+                title="Weighted criterion contributions",
+                margin=dict(l=30, r=20, t=50, b=30),
+                xaxis_title="Criterion",
+                yaxis_title="Contribution",
+                barmode="group",
+                template="plotly_white",
+                paper_bgcolor="#FFFFFF",
+                plot_bgcolor="#FFFFFF",
+            )
+            accordion_children.extend(
+                [
+                    html.P(
+                        "Per-criterion contribution profile:",
+                        className="fw-bold mt-3",
+                    ),
+                    dcc.Graph(
+                        figure=contribution_fig,
+                        config={"displayModeBar": False},
+                        className="postfactum-trajectory-plot",
+                    ),
+                ]
+            )
 
         return dbc.AccordionItem(
             accordion_children,
@@ -385,7 +552,7 @@ def build_postfactum_results_layout(
     body = [
         html.H5(POSTFACTUM_METHODS[method_key]["label"], className="mb-3"),
         html.P(
-            f"Improving {source_label} (rank {source_rank}) towards {target_label} (rank {target_rank})."
+            f"Improving {source_label} (rank {source_rank}) towards {target_label} (rank {target_rank}) using {agg_display_name}."
         ),
         dbc.Accordion(accordion_items, always_open=True),
     ]
@@ -445,7 +612,7 @@ def visualization_tab():
                 dcc.Loading(
                     dcc.Graph(id="ranking-fig", className="col-lg-12"),
                     overlay_style=OVERLAY_STYLE,
-                    custom_spinner=create_spinner("Loading WMSD visualization..."),
+                    custom_spinner=create_spinner("Loading ranking visualization..."),
                 ),
                 className="row",
             ),
@@ -466,7 +633,7 @@ def visualization_tab():
     )
 
 
-def postfactum_analysis_card(id, df, precision, colorscale, params_dict=None):
+def postfactum_analysis_card(id, df, precision, colorscale, agg_method_key, params_dict=None):
     card_context = build_card_context(df, params_dict)
 
     return html.Div(
@@ -498,11 +665,11 @@ def postfactum_analysis_card(id, df, precision, colorscale, params_dict=None):
                 dbc.Tabs(
                     [
                         dbc.Tab(
-                            postfactum_target_tab(id, df, precision),
+                            postfactum_target_tab(id, df, precision, agg_method_key),
                             label="Analysis target",
                         ),
                         dbc.Tab(
-                            postfactum_method_tab(id, df),
+                            postfactum_method_tab(id, df, agg_method_key),
                             label="Method and options",
                         ),
                         dbc.Tab(postfactum_results_tab(id), label="Results"),
@@ -516,7 +683,7 @@ def postfactum_analysis_card(id, df, precision, colorscale, params_dict=None):
     )
 
 
-def postfactum_target_tab(id, df, precision):
+def postfactum_target_tab(id, df, precision, agg_method_key):
     return [
         dbc.Row(
             html.P(
@@ -526,7 +693,7 @@ def postfactum_target_tab(id, df, precision):
                     " alternative you want to change and the ",
                     html.B("target"),
                     " alternative you aim to supersede. We will find ways to change the source alternative to "
-                    "be as good or slightly better than the target alternative (according to TOPSIS).",
+                    f"be as good or slightly better than the target alternative (according to {get_aggregation_display_name(agg_method_key)}).",
                 ]
             )
         ),
@@ -561,7 +728,8 @@ def postfactum_target_tab(id, df, precision):
     ]
 
 
-def postfactum_method_tab(id, df):
+def postfactum_method_tab(id, df, agg_method_key):
+    available_methods = get_postfactum_methods(agg_method_key)
     criteria_columns = get_criteria_columns(df)
     criteria_options = [
         {"label": criterion, "value": criterion} for criterion in criteria_columns
@@ -606,9 +774,9 @@ def postfactum_method_tab(id, df):
                                         "label": POSTFACTUM_METHODS[key]["label"],
                                         "value": key,
                                     }
-                                    for key in POSTFACTUM_METHODS
+                                    for key in available_methods
                                 ],
-                                value="improvement_single_feature",
+                                value=available_methods[0],
                                 inputClassName="me-2",
                                 labelClassName="d-block",
                             ),
@@ -974,7 +1142,27 @@ def settings_tab(dataset):
                 [
                     html.Div(
                         [
-                            html.H4("Settings", className="section-h4"),
+                            html.H4("Ranking method", className="section-h4"),
+                            html.P(
+                                "Step 3 remains the main place to choose the ranking method. This section lets you switch methods quickly while already working in the dashboard.",
+                                className="text-muted",
+                            ),
+                            dbc.Label("Choose the aggregation method used for the ranking:"),
+                            dbc.Select(
+                                options=[
+                                    {"label": config["label"], "value": key}
+                                    for key, config in AGGREGATION_OPTIONS.items()
+                                ],
+                                value=DEFAULT_AGGREGATION_METHOD,
+                                id="agg-method-dropdown",
+                                className="form-control",
+                            ),
+                            html.Hr(),
+                            html.H4("Visualization settings", className="section-h4"),
+                            html.P(
+                                "Visual preferences still apply independently from the method chosen for the ranking.",
+                                className="text-muted",
+                            ),
                             dbc.Label(
                                 "Choose the color scale for the ranking visualization:"
                             ),
@@ -995,10 +1183,10 @@ def settings_tab(dataset):
                                 className="form-control",
                             ),
                             html.P(),
-                            dbc.Label("Choose the highlight circle outline color:"),
+                            dbc.Label("Choose the highlight color for selected alternatives:"),
                             dbc.Input(
                                 id="highlight-color-input",
-                                value="#FFFFFF",
+                                value=DEFAULT_HIGHLIGHT_COLOR,
                                 type="color",
                                 className="form-control",
                                 style={"width": "100px", "height": "40px"},
@@ -1025,7 +1213,7 @@ def settings_tab(dataset):
                         [
                             html.H4("Export", className="section-h4"),
                             html.P(
-                                "To perform a similar analysis in the future with the same weights, value ranges, "
+                                "To perform a similar analysis in the future with the same aggregation method, weights, value ranges, "
                                 "and criteria types, you can download the JSON settings file. The next time you "
                                 "upload a dataset, you can upload the settings file to apply the same settings."
                             ),
@@ -1041,7 +1229,7 @@ def settings_tab(dataset):
                             html.Br(),
                             html.Br(),
                             html.P(
-                                "To share the results of the analysis, you can download an HTML report. Containing "
+                                "To share the results of the analysis, you can download an HTML report, containing "
                                 "the ranking visualization, the dataset, and a list of all the performed postfactum "
                                 "analyses."
                             ),
@@ -1068,8 +1256,42 @@ def settings_tab(dataset):
     )
 
 
+def build_ranking_figure(transformer, ranked_df, colorscale, params_dict=None):
+    agg_key = str(transformer.agg_fn.letter)
+    agg_label = get_score_label(agg_key)
+    if supports_wmsd(agg_key):
+        return transformer.plot(plot_name="", color=colorscale)
+
+    x_values = get_ranked_alternative_labels(ranked_df, params_dict)
+    fig = go.Figure(
+        data=[
+            go.Bar(
+                x=x_values,
+                y=ranked_df[agg_label].tolist(),
+                marker_color=DEFAULT_RANKING_BAR_COLOR,
+                hovertemplate="%{x}<br>%{y:.4f}<extra></extra>",
+            )
+        ]
+    )
+    fig.update_layout(
+        title=f"{get_aggregation_display_name(agg_key)} ranking profile",
+        xaxis_title="Alternative",
+        yaxis_title=agg_label,
+        margin=dict(l=30, r=20, t=50, b=60),
+        template="plotly_white",
+        paper_bgcolor="#FFFFFF",
+        plot_bgcolor="#FFFFFF",
+        xaxis=dict(
+            type="category",
+            categoryorder="array",
+            categoryarray=x_values,
+        ),
+    )
+    return fig
+
+
 def extract_data_from_store(
-    query_param, store_data, params_dict, precision, colorscale, plot=False
+    query_param, store_data, params_dict, precision, colorscale, agg_method_key=None, plot=False
 ):
     df = None
     fig = None
@@ -1088,18 +1310,22 @@ def extract_data_from_store(
         df = pd.DataFrame.from_dict(store_data)
 
     if df is not None and params_dict is not None:
+        agg_method_key = agg_method_key or get_aggregation_method(params_dict)
+        agg_config = get_aggregation_config(agg_method_key)
+        agg_label = agg_config["score_label"]
+        agg_column = agg_config["score_column"]
         wmsd_df, expert_ranges, weights, objectives = prepare_wmsd_data(df, params_dict)
-        wmsd = wmsdt.WMSDTransformer(wmsdt.RTOPSIS, server_setup.SOLVER)
+        wmsd = wmsdt.WMSDTransformer(agg_config["class"], server_setup.SOLVER)
         wmsd_df = wmsd.fit_transform(wmsd_df, weights, objectives, expert_ranges)
 
         df.loc[:, "WM"] = wmsd_df.loc[:, "Mean"].values
         df.loc[:, "WSD"] = wmsd_df.loc[:, "Std"].values
-        df.loc[:, "TOPSIS Score [R(v)]"] = wmsd_df.loc[:, "R"].values
-        df = df.sort_values("TOPSIS Score [R(v)]", ascending=False)
+        df.loc[:, agg_label] = wmsd_df.loc[:, agg_column].values
+        df = df.sort_values(agg_label, ascending=False)
         df.insert(0, "Rank", range(1, df.shape[0] + 1))
 
         if plot is True:
-            fig = wmsd.plot(plot_name="", color=colorscale)
+            fig = build_ranking_figure(wmsd, df, colorscale, params_dict)
         else:
             fig = None
 
@@ -1109,6 +1335,7 @@ def extract_data_from_store(
 @callback(
     Output("ranking-fig", "figure"),
     Output("ranking-datatable", "children"),
+    Output("agg-method-dropdown", "value"),
     Output("precision-input", "value"),
     Output("colorscale-dropdown", "value"),
     Output("wmsd-data-store", "data"),
@@ -1120,6 +1347,7 @@ def extract_data_from_store(
     Input("precision-store", "data"),
     Input("colorscale-store", "data"),
     Input("highlight-color-store", "data"),
+    Input("aggregation-method-store", "data"),
 )
 def update_from_store(
     query_param,
@@ -1129,31 +1357,47 @@ def update_from_store(
     precision,
     colorscale,
     highlight_color,
+    agg_method_key,
 ):
     df, precision, colorscale, params_dict, fig = extract_data_from_store(
-        query_param, store_data, params_dict, precision, colorscale, plot=True
+        query_param, store_data, params_dict, precision, colorscale, agg_method_key, plot=True
     )
 
     if df is not None:
         table = styled_datatable(
             df, precision=precision, row_selectable="single", id="ranking-table"
         )
-        # Store the dataframe for use in highlighting callback
-        wmsd_data = df[["WM", "WSD", "TOPSIS Score [R(v)]"]].to_dict("records")
+        agg_method_key = agg_method_key or get_aggregation_method(params_dict)
+        agg_label = get_score_label(agg_method_key)
+        alternative_labels = get_ranked_alternative_labels(df, params_dict)
+        wmsd_data = []
+        for label, (_, row) in zip(alternative_labels, df.iterrows()):
+            wmsd_data.append(
+                {
+                    "Alternative": label,
+                    "WM": row["WM"],
+                    "WSD": row["WSD"],
+                    "Score": row[agg_label],
+                    "plot_x": row["WM"] if supports_wmsd(agg_method_key) else label,
+                    "plot_y": row["WSD"] if supports_wmsd(agg_method_key) else row[agg_label],
+                    "plot_type": "scatter" if supports_wmsd(agg_method_key) else "bar",
+                }
+            )
 
         # Set default highlight color if not set
         if highlight_color is None:
-            highlight_color = "#FFFFFF"
+            highlight_color = DEFAULT_HIGHLIGHT_COLOR
 
-        return fig, table, precision, colorscale, wmsd_data, highlight_color
+        return fig, table, agg_method_key, precision, colorscale, wmsd_data, highlight_color
     else:
         return (
             None,
             data_preview_default_message(),
+            DEFAULT_AGGREGATION_METHOD,
             DEFAULT_PRECISION,
             DEFAULT_COLORSCALE,
             None,
-            "#FFFFFF",
+            DEFAULT_HIGHLIGHT_COLOR,
         )
 
 
@@ -1162,9 +1406,10 @@ def update_from_store(
     Input("download-params-btn", "n_clicks"),
     State("data-filename-store", "data"),
     State("params-store", "data"),
+    State("aggregation-method-store", "data"),
     prevent_initial_call=True,
 )
-def download_params_dict(n_clicks, data_filename, params_dict):
+def download_params_dict(n_clicks, data_filename, params_dict, agg_method_key):
     if data_filename is None:
         if params_dict is None:
             with open("data/students_settings.json") as f:
@@ -1173,6 +1418,8 @@ def download_params_dict(n_clicks, data_filename, params_dict):
     else:
         json_filename = data_filename.split(".")[0] + "_settings.json"
 
+    params_dict = dict(params_dict or {})
+    params_dict[AGGREGATION_METHOD_KEY] = agg_method_key or get_aggregation_method(params_dict)
     return dict(content=json.dumps(params_dict, indent=4), filename=json_filename)
 
 
@@ -1275,6 +1522,7 @@ def _component_to_html(component):
     State({"type": "postfactum-analysis", "index": ALL}, "id"),
     State({"type": "postfactum-card-context", "index": ALL}, "data"),
     State({"type": "postfactum-results-container", "index": ALL}, "children"),
+    State("aggregation-method-store", "data"),
     prevent_initial_call=True,
 )
 def download_html_report(
@@ -1285,6 +1533,7 @@ def download_html_report(
     card_ids,
     card_contexts,
     results_children,
+    agg_method_key,
 ):
     if not n_clicks:
         return dash.no_update
@@ -1294,6 +1543,8 @@ def download_html_report(
         if data_filename
         else "playground"
     )
+    agg_method_key = agg_method_key or DEFAULT_AGGREGATION_METHOD
+    agg_name = get_aggregation_display_name(agg_method_key)
 
     ranking_fig_html = ""
     if ranking_fig is not None:
@@ -1334,7 +1585,7 @@ def download_html_report(
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>TOPSIS Postfactum Report — {dataset_name}</title>
+<title>{agg_name} Postfactum Report — {dataset_name}</title>
 <style>
 body {{ font-family: Arial, Helvetica, sans-serif; margin: 2rem; color: #222; }}
 h1, h2, h3, h4 {{ color: #1f3b70; }}
@@ -1359,8 +1610,9 @@ section.report-accordion-item {{
 </style>
 </head>
 <body>
-<h1>TOPSIS Postfactum Report</h1>
+<h1>{agg_name} Postfactum Report</h1>
 <p><strong>Dataset:</strong> {dataset_name}<br/>
+<strong>Aggregation method:</strong> {agg_name}<br/>
 <strong>Generated:</strong> {timestamp}</p>
 
 <h2>Ranking visualization</h2>
@@ -1398,20 +1650,29 @@ def change_colorscale_preview(scale):
 
 
 @callback(
+    Output("aggregation-method-store", "data"),
+    Output("params-store", "data", allow_duplicate=True),
     Output("precision-store", "data"),
     Output("colorscale-store", "data"),
     Output("highlight-color-store", "data"),
     Input("apply-changes-btn", "n_clicks"),
+    State("agg-method-dropdown", "value"),
+    State("params-store", "data"),
     State("precision-input", "value"),
     State("colorscale-dropdown", "value"),
     State("highlight-color-input", "value"),
     prevent_initial_call=True,
 )
-def change_precision(n_clicks, precision, colorscale, highlight_color):
+def change_precision(n_clicks, agg_method, params_dict, precision, colorscale, highlight_color):
     if n_clicks is not None and n_clicks > 0:
-        return precision, colorscale, highlight_color
+        agg_method = agg_method or get_aggregation_method(params_dict)
+        updated_params = dash.no_update
+        if params_dict is not None:
+            updated_params = dict(params_dict)
+            updated_params[AGGREGATION_METHOD_KEY] = agg_method
+        return agg_method, updated_params, precision, colorscale, highlight_color
     else:
-        return dash.no_update, dash.no_update, dash.no_update
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
 
 @callback(
@@ -1421,6 +1682,7 @@ def change_precision(n_clicks, precision, colorscale, highlight_color):
     State("data-store", "data"),
     State("precision-store", "data"),
     State("colorscale-store", "data"),
+    State("aggregation-method-store", "data"),
     State("dashboard-query-param", "value"),
     State("params-store", "data"),
     prevent_initial_call=True,
@@ -1431,19 +1693,20 @@ def add_postfactum_analysis_card(
     store_data,
     precision,
     colorscale,
+    agg_method_key,
     query_param,
     params_dict,
 ):
     if n_clicks is not None and n_clicks > 0:
         df, precision, colorscale, params_dict, fig = extract_data_from_store(
-            query_param, store_data, params_dict, precision, colorscale, plot=True
+            query_param, store_data, params_dict, precision, colorscale, agg_method_key, plot=True
         )
 
         if df is None or df.empty:
             return dash.no_update
 
         new_card = postfactum_analysis_card(
-            n_clicks, df, precision, colorscale, params_dict
+            n_clicks, df, precision, colorscale, agg_method_key or get_aggregation_method(params_dict), params_dict
         )
         current_analyses.insert(-1, new_card)
 
@@ -1478,45 +1741,59 @@ def highlight_selected_point(selected_rows, current_fig, wmsd_data, highlight_co
     if current_fig is None or wmsd_data is None:
         return dash.no_update
 
+    fig = go.Figure(current_fig)
+
     # Use default color if not set
     if highlight_color is None:
-        highlight_color = "#FFFFFF"
+        highlight_color = DEFAULT_HIGHLIGHT_COLOR
 
     # Remove any existing highlight traces
-    fig_data = [
-        trace for trace in current_fig["data"] if trace.get("name") != "Selected"
-    ]
+    fig.data = tuple(
+        trace for trace in fig.data if getattr(trace, "name", None) != "Selected"
+    )
 
     # If a row is selected, add a highlight
     if selected_rows and len(selected_rows) > 0:
         selected_idx = selected_rows[0]
 
-        # Get the coordinates of the selected point
         selected_point = wmsd_data[selected_idx]
-        wm = selected_point["WM"]
-        wsd = selected_point["WSD"]
+        if selected_point.get("plot_type") == "bar":
+            for trace in fig.data:
+                if getattr(trace, "type", None) == "bar":
+                    x_values = list(trace.x or [])
+                    colors = [DEFAULT_RANKING_BAR_COLOR] * len(x_values)
+                    if selected_point["plot_x"] in x_values:
+                        colors[x_values.index(selected_point["plot_x"])] = highlight_color
+                    trace.marker.color = colors
+                    trace.marker.line.color = "rgba(0, 0, 0, 0)"
+                    trace.marker.line.width = 0
+                    break
+        else:
+            fig.add_trace(
+                go.Scatter(
+                    x=[selected_point["plot_x"]],
+                    y=[selected_point["plot_y"]],
+                    mode="markers",
+                    name="Selected",
+                    marker={
+                        "size": 20,
+                        "color": "rgba(255, 255, 255, 0)",
+                        "line": {"color": highlight_color, "width": 3},
+                    },
+                    showlegend=False,
+                    hoverinfo="skip",
+                )
+            )
+    else:
+        for trace in fig.data:
+            if getattr(trace, "type", None) == "bar":
+                x_values = list(trace.x or [])
+                trace.marker.color = [DEFAULT_RANKING_BAR_COLOR] * len(x_values)
+                trace.marker.line.color = "rgba(0, 0, 0, 0)"
+                trace.marker.line.width = 0
+                break
 
-        # Create a scatter trace for the highlight (circle outline with user-selected color)
-        highlight_trace = {
-            "type": "scatter",
-            "x": [wm],
-            "y": [wsd],
-            "mode": "markers",
-            "name": "Selected",
-            "marker": {
-                "size": 20,
-                "color": "rgba(255, 255, 255, 0)",  # Transparent fill
-                "line": {"color": highlight_color, "width": 3},
-            },
-            "showlegend": False,
-            "hoverinfo": "skip",
-        }
-        fig_data.append(highlight_trace)
-
-    # Update the figure
-    current_fig["data"] = fig_data
-
-    return current_fig
+    return fig
 
 
 @callback(
@@ -1757,6 +2034,7 @@ def _collect_boundary_values(selected_features, bound_ids, bound_values):
     State("dashboard-query-param", "value"),
     State("data-store", "data"),
     State("params-store", "data"),
+    State("aggregation-method-store", "data"),
     State("precision-store", "data"),
     State("colorscale-store", "data"),
     background=True,
@@ -1806,6 +2084,7 @@ def execute_postfactum_analysis(
     query_param,
     store_data,
     params_dict,
+    agg_method_key,
     precision,
     colorscale,
 ):
@@ -1818,7 +2097,10 @@ def execute_postfactum_analysis(
             color="warning",
         )
 
-    if method_key not in POSTFACTUM_METHODS:
+    agg_method_key = agg_method_key or get_aggregation_method(params_dict)
+    available_methods = get_postfactum_methods(agg_method_key)
+
+    if method_key not in available_methods:
         return dbc.Alert("Please select a valid improvement method.", color="warning")
 
     records = card_context.get("records", [])
@@ -1860,7 +2142,7 @@ def execute_postfactum_analysis(
     epsilon = max(1e-8, min(0.5, epsilon))
 
     transformer, decision_df, ranked_df, _ = load_postfactum_runtime(
-        query_param, store_data, params_dict
+        query_param, store_data, params_dict, agg_method_key
     )
 
     if transformer is None or decision_df is None or ranked_df is None:

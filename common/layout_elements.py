@@ -8,6 +8,7 @@ import dash_daq as daq
 EXTERNAL_STYLESHEETS = [
     dbc.themes.BOOTSTRAP,
     "https://cdn.jsdelivr.net/npm/bs-stepper/dist/css/bs-stepper.min.css",
+    "https://cdn.jsdelivr.net/npm/intro.js/minified/introjs.min.css",
     "https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap",
     "https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap",
     "https://fonts.googleapis.com/css2?family=Raleway:wght@400&display=swap",
@@ -24,6 +25,9 @@ EXTERNAL_SCRIPTS = [
     },
     {
         "src": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js",
+    },
+    {
+        "src": "https://cdn.jsdelivr.net/npm/intro.js/minified/intro.min.js",
     },
 ]
 
@@ -92,10 +96,11 @@ def footer():
             <div class="col-sm-5 col-xs-12">
                 <h4>How it works</h4>
                 <p>
-                    Postfactum Analysis Dashboard is a tool for performing classic TOPSIS rankings
-                    and analyzing the possiblities of improving the positions
-                    of selected alternatives. It also uses WMSD visualizations to show the ranking
-                    as a 2D plot. Upload your files to try it out!
+                    Postfactum Analysis Dashboard is a tool for performing MCDA rankings
+                    and analyzing the possibilities of improving the positions
+                    of selected alternatives. TOPSIS-family methods use WMSD visualizations,
+                    while score-based methods can be explored directly from the dashboard.
+                    Upload your files to try it out!
                 </p>
             </div>
             <div class="col-sm-3 col-xs-6">
@@ -361,6 +366,11 @@ def upload_card(
 
 
 def create_criteria_table(params_dict, disabled=False):
+    criteria_keys = [
+        criterion
+        for criterion, cfg in (params_dict or {}).items()
+        if isinstance(cfg, dict) and "id_column" in cfg
+    ]
     criteria_table_header = html.Thead(
         html.Tr(
             [
@@ -474,7 +484,7 @@ def create_criteria_table(params_dict, disabled=False):
                     ),
                 ]
             )
-            for criterion in params_dict.keys()
+            for criterion in criteria_keys
         ]
     )
 
